@@ -1,0 +1,11 @@
+venv/
+
+.DS_Store
+
+*.pyc
+*.swp
+*.json
+*.csv
+
+# Don't commit your configs!
+src/configs.py
