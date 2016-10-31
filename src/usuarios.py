@@ -12,7 +12,6 @@ class Usuarios:
 
 
     def add(self, user):
-        logger.debug("Saving: %s", str(user))
         user_id = str(user["id"])
 
         self.usuarios[user_id] = user.to_dict()
@@ -36,9 +35,7 @@ class Usuarios:
 
     def save(self):
         with open("./usuarios.json", "w") as usuarios_file:
-            print(self.usuarios)
             text = json.dumps(self.usuarios, indent=5, separators=(",", ": "))
-            logger.info(text)
             usuarios_file.write(text)
 
 

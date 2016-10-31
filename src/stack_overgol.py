@@ -2,6 +2,7 @@
 
 import time
 import logging
+from operator import itemgetter
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -50,12 +51,15 @@ class StackOvergol:
 
         keyboard = []
 
+        logger.info(configs.LISTA_MENSALISTAS)
+
         # Só mostrar os usuários que ainda não estão na lista de presença e são mensalistas
-        usuarios = [u for u in configs.LISTA_MENSALISTAS if u in self.usuarios and not self._is_in_any_lista({ "id": u })]
+        usuarios = [user for user in self.usuarios.values() if user["id"] in configs.LISTA_MENSALISTAS]
+
+        usuarios = sorted(usuarios, key=itemgetter("first_name", "last_name"))
 
         if len(usuarios):
-            for uuid in usuarios:
-                user = self.usuarios.get(uuid)
+            for user in usuarios:
                 keyboard.append([InlineKeyboardButton("{} {}".format(user["first_name"], user["last_name"]), callback_data=str(user["id"]))])
 
             keyboard.append([InlineKeyboardButton("Cancelar", callback_data="-1")])
@@ -306,6 +310,7 @@ class StackOvergol:
 
         self._imprimir_lista_presenca(update)
 
+
     def help(self, bot, update):
 
         self._save_user(update.message.from_user)
@@ -357,6 +362,19 @@ class StackOvergol:
             return
 
         self._imprimir_lista_presenca(update)
+
+
+    def uuid(self, bot, update):
+        self._save_user(update.message.from_user)
+
+        if not self._is_valid_msg(update):
+            return
+
+        user = update.message.from_user
+
+        text = "{} {}: {}".format(user["first_name"], user["last_name"], user["id"])
+
+        return update.message.reply_text(text)
 
 
     def _adiciona_lista_agarrar(self, user):
@@ -430,12 +448,20 @@ class StackOvergol:
         A mensagem é válida se vier do grupo StackOvergol
         """
 
-        isValid = configs.DEBUG or update.message.chat.id == configs.GROUP_ID
+        user = update.message.from_user
 
-        if not isValid:
-            logger.info("invalid msg")
+        if user["id"] in configs.LISTA_ADMINS:
+            logger.info("User is ADMIN, skip validation")
+            return True
 
-        return isValid
+        if configs.DEBUG:
+            logger.info("DEBUG mode, skip validation")
+            return True
+
+        if update.message.chat.id == configs.GROUP_ID:
+            return True
+
+        return False
 
 
     def _save_user(self, user):
@@ -458,9 +484,8 @@ class StackOvergol:
             if len(self.lp_goleiros) == configs.MAX_VAGAS_GOLEIROS:
                 todos_goleiros.append("Lista de Espera (Goleiro):")
 
-            todos_goleiros.append("{} - ({}) [{}] {} {}".format(
+            todos_goleiros.append("{} - [{}] {} {}".format(
                 i + 1,
-                user.id,
                 user.timestamp,
                 user.first_name,
                 user.last_name
@@ -478,9 +503,8 @@ class StackOvergol:
         todos_jogadores = []
 
         for i, user in enumerate(self.lp_mensalistas):
-            todos_jogadores.append("{} - ({}) [{}] {} {} (M)".format(
+            todos_jogadores.append("{} - [{}] {} {} (M)".format(
                 i + 1,
-                user["id"],
                 user["timestamp"],
                 user["first_name"],
                 user["last_name"]
@@ -490,9 +514,8 @@ class StackOvergol:
             if len(todos_jogadores) == configs.MAX_VAGAS_JOGADORES:
                 todos_jogadores.append("Lista de Espera:")
 
-            todos_jogadores.append("{} - ({}) [{}] {} {} (C)".format(
+            todos_jogadores.append("{} - [{}] {} {} (C)".format(
                 i + 1 + len(self.lp_mensalistas),
-                user.id,
                 user.timestamp,
                 user.first_name,
                 user.last_name
@@ -509,9 +532,8 @@ class StackOvergol:
             linhas.append("Farrapeiros:")
 
             for i, user in enumerate(self.lp_farrapeiros):
-                linhas.append("{} - ({}) [{}] {} {} ({})".format(
+                linhas.append("{} - [{}] {} {} ({})".format(
                     i + 1,
-                    user["id"],
                     user["timestamp"],
                     user["first_name"],
                     user["last_name"],
