@@ -244,6 +244,8 @@ class StackOvergol:
             update.message.reply_text("Os registros estão fechados.")
             return
 
+        self.lp_farrapeiros = list(filter(lambda u: u["id"] != user["id"], self.lp_farrapeiros))
+
         if self._adiciona_lista_agarrar(user):
             self._imprimir_lista_presenca(update)
         else:
