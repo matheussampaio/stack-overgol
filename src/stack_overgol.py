@@ -138,7 +138,9 @@ class StackOvergol:
 
         elif text == "Quem vai?":
             if self._adiciona_lista(user):
-                message = self._get_lista_presenca()
+                self.lp_farrapeiros = [tUser for tUser in self.lp_farrapeiros if tUser["id"] != user["id"]]
+
+                message = "{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"])
             else:
                 message = "{} {} já está na lista.".format(user["first_name"], user["last_name"])
         else:
@@ -151,7 +153,7 @@ class StackOvergol:
 
                     self.lp_farrapeiros.append(user)
 
-                message = self._get_lista_presenca()
+                message = "{} {} removido da lista de presença.".format(user["first_name"], user["last_name"])
             else:
                 message = "{} {} não está na lista.".format(user["first_name"], user["last_name"])
 
@@ -244,10 +246,10 @@ class StackOvergol:
             update.message.reply_text("Os registros estão fechados.")
             return
 
-        self.lp_farrapeiros = list(filter(lambda u: u["id"] != user["id"], self.lp_farrapeiros))
+        self.lp_farrapeiros = [tUser for tUser in self.lp_farrapeiros if tUser["id"] != user["id"]]
 
         if self._adiciona_lista_agarrar(user):
-            self._imprimir_lista_presenca(update)
+            update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
         else:
             update.message.reply_text("{} {} já está na lista.".format(user["first_name"], user["last_name"]))
 
@@ -272,10 +274,10 @@ class StackOvergol:
             update.message.reply_text("Os registros estão fechados.")
             return
 
-        self.lp_farrapeiros = list(filter(lambda u: u["id"] != user["id"], self.lp_farrapeiros))
+        self.lp_farrapeiros = [tUser for tUser in self.lp_farrapeiros if tUser["id"] != user["id"]]
 
         if self._adiciona_lista(user):
-            self._imprimir_lista_presenca(update)
+            update.message.reply_text("{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"]))
         else:
             update.message.reply_text("{} {} já está na lista.".format(user["first_name"], user["last_name"]))
 
@@ -310,7 +312,7 @@ class StackOvergol:
 
             self.lp_farrapeiros.append(user)
 
-        self._imprimir_lista_presenca(update)
+        update.message.reply_text("{} {} removido da lista de presença.".format(user["first_name"], user["last_name"]))
 
 
     def help(self, bot, update):
@@ -407,13 +409,13 @@ class StackOvergol:
 
     def _remove_listas(self, user):
         old_len_lpm = len(self.lp_mensalistas)
-        self.lp_mensalistas = list(filter(lambda u: u["id"] != user["id"], self.lp_mensalistas))
+        self.lp_mensalistas = [tUser for tUser in self.lp_mensalistas if tUser["id"] != user["id"]]
 
         old_len_lpc = len(self.lp_convidados)
-        self.lp_convidados = list(filter(lambda u: u["id"] != user["id"], self.lp_convidados))
+        self.lp_convidados = [tUser for tUser in self.lp_convidados if tUser["id"] != user["id"]]
 
         old_len_lpg = len(self.lp_goleiros)
-        self.lp_goleiros = list(filter(lambda u: u["id"] != user["id"], self.lp_goleiros))
+        self.lp_goleiros = [tUser for tUser in self.lp_goleiros if tUser["id"] != user["id"]]
 
         if old_len_lpm != len(self.lp_mensalistas) \
                 or old_len_lpc != len(self.lp_convidados) \
