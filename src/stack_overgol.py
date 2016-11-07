@@ -6,22 +6,25 @@ from operator import itemgetter
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-import configs
-from usuarios import Usuarios
+from firebase import Firebase
 
 logger = logging.getLogger(__name__)
 
 class StackOvergol:
 
     def __init__(self):
-        self.lp_mensalistas = []
-        self.lp_convidados = []
-        self.lp_convidados_de_alguem = []
-        self.lp_goleiros = []
-        self.lp_farrapeiros = []
+        self.db = Firebase.get_database()
 
-        self.usuarios = Usuarios()
-        self.registros_abertos = configs.DEBUG or False
+        config = self.db.child("config").get().val()
+
+        self.DEBUG = config["debug"]
+        self.GROUP_ID = config["group_id"]
+        self.LISTA_ADMINS = [ int(key) for key in config["admins"].keys() ]
+        self.LISTA_MENSALISTAS = [ int(key) for key in config["mensalistas"].keys() ]
+        self.MAX_VAGAS_GOLEIROS = config["max_goleiros"]
+        self.MAX_VAGAS_JOGADORES = config["max_jogadores"]
+
+        self.registros_abertos = self.DEBUG or self.db.child("registros_abertos").get().val()
 
 
     def vai(self, bot, update):
@@ -35,40 +38,44 @@ class StackOvergol:
         presença.
         """
 
-        user = update.message.from_user
+        user = update.message.from_user.to_dict()
 
-        self._save_user(user)
-
-        if not user["id"] in configs.LISTA_ADMINS:
-            return
+        self.db.child("users").child(user["id"]).set(user)
 
         if not self._is_valid_msg(update):
             return
 
-        if not self.registros_abertos:
-            update.message.reply_text("Os registros estão fechados.")
+        if not user["id"] in self.LISTA_ADMINS:
             return
+
+        if not self.db.child("registros_abertos").get().val():
+            return update.message.reply_text("Os registros estão fechados.")
 
         keyboard = []
 
-        logger.info(configs.LISTA_MENSALISTAS)
-
         # Só mostrar os usuários que ainda não estão na lista de presença e são mensalistas
-        usuarios = [user for user in self.usuarios.values() if user["id"] in configs.LISTA_MENSALISTAS]
+        try:
+            todos_usuarios = self.db.child("users").get().val().values()
+        except Exception:
+            return update.message.reply_text("Ninguém disponivel.")
 
-        usuarios = sorted(usuarios, key=itemgetter("first_name", "last_name"))
+        mensalistas = [ user for user in todos_usuarios if user["id"] in self.LISTA_MENSALISTAS ]
 
-        if len(usuarios):
-            for user in usuarios:
-                keyboard.append([InlineKeyboardButton("{} {}".format(user["first_name"], user["last_name"]), callback_data=str(user["id"]))])
+        mensalistas_ordenados = sorted(mensalistas, key=itemgetter("first_name", "last_name"))
 
-            keyboard.append([InlineKeyboardButton("Cancelar", callback_data="-1")])
+        if mensalistas_ordenados:
+            for user in mensalistas_ordenados:
+                botao = InlineKeyboardButton("{} {}".format(user["first_name"], user["last_name"]), callback_data=str(user["id"]))
+                keyboard.append([ botao ])
+
+            botao_cancelar = InlineKeyboardButton("Cancelar", callback_data="-1")
+            keyboard.append([ botao_cancelar ])
 
             reply_markup = InlineKeyboardMarkup(keyboard)
             update.message.reply_text("Quem vai?", reply_markup=reply_markup)
 
         else:
-            update.message.reply_text("Ninguém disponivel.")
+            return update.message.reply_text("Ninguém disponivel.")
 
 
     def nao_vai(self, bot, update):
@@ -80,35 +87,34 @@ class StackOvergol:
         que estão na lista de presença. O usuário deverá escolher um dentre as
         opções. O bot deve retirar o usuário selecionado da lista de presença.
         """
-        user = update.message.from_user
+        user = update.message.from_user.to_dict()
 
-        self._save_user(user)
-
-        if not user["id"] in configs.LISTA_ADMINS:
-            return
+        self.db.child("users").child(user["id"]).set(user)
 
         if not self._is_valid_msg(update):
             return
 
-        if not self.registros_abertos:
-            update.message.reply_text("Os registros estão fechados.")
+        if not user["id"] in self.LISTA_ADMINS:
             return
+
+        if not self.db.child("registros_abertos").get().val():
+            return update.message.reply_text("Os registros estão fechados.")
 
         keyboard = []
 
-        usuarios = self.lp_goleiros + self.lp_mensalistas + self.lp_convidados
+        try:
+            lista_presenca = self.db.child("lista").get().val().values()
+        except Exception:
+            return update.message.reply_text("Lista de presença vazia.")
 
-        if not len(usuarios):
-            update.message.reply_text("Lista de presença vazia.")
-            return
-
-        for user in usuarios:
+        for user in lista_presenca:
             user_name = "{} {}".format(user["first_name"], user["last_name"])
-            keyboard.append([
-                InlineKeyboardButton(user_name, callback_data=str(user["id"]))
-                ])
+            botao = InlineKeyboardButton(user_name, callback_data=str(user["id"]))
+            keyboard.append([ botao ])
 
-        keyboard.append([InlineKeyboardButton("Cancelar", callback_data="-1")])
+        botao_cancelar = InlineKeyboardButton("Cancelar", callback_data="-1")
+        keyboard.append([ botao_cancelar ])
+
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         update.message.reply_text("Quem nao vai?", reply_markup=reply_markup)
@@ -122,7 +128,7 @@ class StackOvergol:
 
         from_user = query_dict["from"]
 
-        if not from_user["id"] in configs.LISTA_ADMINS:
+        if not from_user["id"] in self.LISTA_ADMINS:
             return
 
         data = query_dict["data"]
@@ -132,30 +138,26 @@ class StackOvergol:
                                        chat_id=query.message.chat_id,
                                        message_id=query.message.message_id)
 
-        user = self.usuarios.get(data)
+        user = self.db.child("users").child(data).get().val()
         if not user:
             message = "Nenhum usuário com id: {}".format(data)
 
         elif text == "Quem vai?":
-            if self._adiciona_lista(user):
-                self.lp_farrapeiros = [tUser for tUser in self.lp_farrapeiros if tUser["id"] != user["id"]]
+            self.db.child("farrapeiros").child(user["id"]).remove()
 
-                message = "{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"])
-            else:
-                message = "{} {} já está na lista.".format(user["first_name"], user["last_name"])
+            user["timestamp"] = time.strftime("%X")
+
+            self.db.child("lista").child(user["id"]).set(user)
+
+            message = "{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"])
         else:
-            if self._remove_listas(user):
-                if not self._is_user_in_lista(user, self.lp_farrapeiros):
-                    try:
-                        user["timestamp"] = time.strftime("%X")
-                    except:
-                        user.timestamp = time.strftime("%X")
+            self.db.child("lista").child(user["id"]).remove()
 
-                    self.lp_farrapeiros.append(user)
+            user["timestamp"] = time.strftime("%X")
 
-                message = "{} {} removido da lista de presença.".format(user["first_name"], user["last_name"])
-            else:
-                message = "{} {} não está na lista.".format(user["first_name"], user["last_name"])
+            self.db.child("farrapeiros").child(user["id"]).set(user)
+
+            message = "{} {} removido da lista de presença.".format(user["first_name"], user["last_name"])
 
         return bot.editMessageText(text=message,
                                    chat_id=query.message.chat_id,
@@ -171,26 +173,24 @@ class StackOvergol:
         de registros são liberados.
         """
 
-        self._save_user(update.message.from_user)
+        user = update.message.from_user.to_dict()
+
+        self.db.child("users").child(user["id"]).set(user)
 
         if not self._is_valid_msg(update):
             return
 
-        if self.registros_abertos:
-            update.message.reply_text("Os registros já estão abertos.")
+        if not user["id"] in self.LISTA_ADMINS:
             return
 
-        id_usuario = update.message.from_user.id
+        if self.db.child("registros_abertos").get().val():
+            return update.message.reply_text("Os registros já estão abertos.")
 
-        if id_usuario in configs.LISTA_ADMINS and not self.registros_abertos:
-            self.lp_mensalistas = []
-            self.lp_convidados = []
-            self.lp_convidados_de_alguem = []
-            self.lp_goleiros = []
-            self.lp_farrapeiros = []
-            self.registros_abertos = True
+        self.db.child("registros_abertos").set(True)
+        self.db.child("lista").remove()
+        self.db.child("farrapeiros").remove()
 
-            update.message.reply_text("Registros abertos!")
+        return update.message.reply_text("Registros abertos!")
 
 
     def terminar(self, bot, update):
@@ -205,25 +205,26 @@ class StackOvergol:
         @TODO: Deve sortear a ordem dos times (quem joga primeiro).
         """
 
-        self._save_user(update.message.from_user)
+        user = update.message.from_user.to_dict()
+
+        self.db.child("users").child(user["id"]).set(user)
 
         if not self._is_valid_msg(update):
             return
 
-        if not self.registros_abertos:
-            update.message.reply_text("Os registros estão fechados.")
+        if not user["id"] in self.LISTA_ADMINS:
             return
 
-        id_usuario = update.message.from_user.id
+        if not self.db.child("registros_abertos").get().val():
+            return update.message.reply_text("Os registros já estão fechados.")
 
-        if id_usuario in configs.LISTA_ADMINS:
-            self.registros_abertos = False
+        self.db.child("registros_abertos").set(False)
 
-            lista_final = self._get_lista_presenca()
+        lista_final = self._get_lista_presenca()
 
-            text = "Registro encerrado!\n\nLISTA FINAL:\n{}".format(lista_final)
+        text = "Registro encerrado!\n\nLISTA FINAL:\n{}".format(lista_final)
 
-            update.message.reply_text(text)
+        return update.message.reply_text(text)
 
 
     def vou_agarrar(self, bot, update):
@@ -235,23 +236,24 @@ class StackOvergol:
         adiciona o usuário na lista de goleiros.
         """
 
-        user = update.message.from_user
+        user = update.message.from_user.to_dict()
 
-        self._save_user(user)
+        self.db.child("users").child(user["id"]).set(user)
 
         if not self._is_valid_msg(update):
             return
 
         if not self.registros_abertos:
-            update.message.reply_text("Os registros estão fechados.")
-            return
+            return update.message.reply_text("Os registros estão fechados.")
 
-        self.lp_farrapeiros = [tUser for tUser in self.lp_farrapeiros if tUser["id"] != user["id"]]
+        self.db.child("farrapeiros").child(user["id"]).remove()
 
-        if self._adiciona_lista_agarrar(user):
-            update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
-        else:
-            update.message.reply_text("{} {} já está na lista.".format(user["first_name"], user["last_name"]))
+        user["timestamp"] = time.strftime("%X")
+        user["goleiro"] = True
+
+        self.db.child("lista").child(user["id"]).set(user)
+
+        update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
 
 
     def vou(self, bot, update):
@@ -263,23 +265,23 @@ class StackOvergol:
         será adicionado.
         """
 
-        user = update.message.from_user
+        user = update.message.from_user.to_dict()
 
-        self._save_user(user)
+        self.db.child("users").child(user["id"]).set(user)
 
         if not self._is_valid_msg(update):
             return
 
-        if not self.registros_abertos:
-            update.message.reply_text("Os registros estão fechados.")
-            return
+        if not self.db.child("registros_abertos").get().val():
+            return update.message.reply_text("Os registros estão fechados.")
 
-        self.lp_farrapeiros = [tUser for tUser in self.lp_farrapeiros if tUser["id"] != user["id"]]
+        self.db.child("farrapeiros").child(user["id"]).remove()
 
-        if self._adiciona_lista(user):
-            update.message.reply_text("{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"]))
-        else:
-            update.message.reply_text("{} {} já está na lista.".format(user["first_name"], user["last_name"]))
+        user["timestamp"] = time.strftime("%X")
+
+        self.db.child("lista").child(user["id"]).set(user)
+
+        update.message.reply_text("{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"]))
 
 
     def naovou(self, bot, update):
@@ -291,26 +293,21 @@ class StackOvergol:
         correspondente.
         """
 
-        user = update.message.from_user
+        user = update.message.from_user.to_dict()
 
-        self._save_user(user)
+        self.db.child("users").child(user["id"]).set(user)
 
         if not self._is_valid_msg(update):
             return
 
-        if not self.registros_abertos:
-            update.message.reply_text("Os registros estão fechados.")
-            return
+        if not self.db.child("registros_abertos").get().val():
+            return update.message.reply_text("Os registros estão fechados.")
 
-        self._remove_listas(user)
+        self.db.child("lista").child(user["id"]).remove()
 
-        if not self._is_user_in_lista(user, self.lp_farrapeiros):
-            try:
-                user["timestamp"] = time.strftime("%X")
-            except:
-                user.timestamp = time.strftime("%X")
+        user["timestamp"] = time.strftime("%X")
 
-            self.lp_farrapeiros.append(user)
+        self.db.child("farrapeiros").child(user["id"]).set(user)
 
         update.message.reply_text("{} {} removido da lista de presença.".format(user["first_name"], user["last_name"]))
 
@@ -357,94 +354,27 @@ class StackOvergol:
         situação atual dos registros (Aberto ou Fechado).
         """
 
-        self._save_user(update.message.from_user)
+        user = update.message.from_user.to_dict()
+
+        self.db.child("users").child(user["id"]).set(user)
 
         if not self._is_valid_msg(update):
             return
 
-        if not self.registros_abertos:
-            return
+        if not self.db.child("registros_abertos").get().val():
+            return update.message.reply_text("Os registros estão fechados.")
 
-        self._imprimir_lista_presenca(update)
+        return update.message.reply_text(self._get_lista_presenca())
 
 
     def uuid(self, bot, update):
-        self._save_user(update.message.from_user)
+        user = update.message.from_user.to_dict()
 
-        if not self._is_valid_msg(update):
-            return
-
-        user = update.message.from_user
+        self.db.child("users").child(user["id"]).set(user)
 
         text = "{} {}: {}".format(user["first_name"], user["last_name"], user["id"])
 
         return update.message.reply_text(text)
-
-
-    def _adiciona_lista_agarrar(self, user):
-        if not self._is_in_any_lista(user):
-            user.timestamp = time.strftime("%X")
-            self.lp_goleiros.append(user)
-            return True
-
-        return False
-
-
-    def _adiciona_lista(self, user):
-        if not self._is_in_any_lista(user):
-            try:
-                user["timestamp"] = time.strftime("%X")
-            except:
-                user.timestamp = time.strftime("%X")
-
-            if user["id"] in configs.LISTA_MENSALISTAS:
-                self.lp_mensalistas.append(user)
-            else:
-                self.lp_convidados.append(user)
-
-            return True
-
-        return False
-
-
-    def _remove_listas(self, user):
-        old_len_lpm = len(self.lp_mensalistas)
-        self.lp_mensalistas = [tUser for tUser in self.lp_mensalistas if tUser["id"] != user["id"]]
-
-        old_len_lpc = len(self.lp_convidados)
-        self.lp_convidados = [tUser for tUser in self.lp_convidados if tUser["id"] != user["id"]]
-
-        old_len_lpg = len(self.lp_goleiros)
-        self.lp_goleiros = [tUser for tUser in self.lp_goleiros if tUser["id"] != user["id"]]
-
-        if old_len_lpm != len(self.lp_mensalistas) \
-                or old_len_lpc != len(self.lp_convidados) \
-                or old_len_lpg != len(self.lp_goleiros):
-            return True
-
-        return False
-
-
-    def _is_in_any_lista(self, user):
-        is_in_lista_M = self._is_user_in_lista(user, self.lp_mensalistas)
-        is_in_lista_C = self._is_user_in_lista(user, self.lp_convidados)
-        is_in_lista_G = self._is_user_in_lista(user, self.lp_goleiros)
-
-        return is_in_lista_M or is_in_lista_C or is_in_lista_G
-
-
-    def _is_user_in_lista(self, user, lista):
-        for tmp_user in lista:
-            if tmp_user["id"] == user["id"]:
-                return True
-
-        return False
-
-
-    def _imprimir_lista_presenca(self, update):
-        """Imprimi a lista de presença atual"""
-
-        return update.message.reply_text(self._get_lista_presenca())
 
 
     def _is_valid_msg(self, update):
@@ -452,28 +382,29 @@ class StackOvergol:
         A mensagem é válida se vier do grupo StackOvergol
         """
 
-        user = update.message.from_user
+        user = update.message.from_user.to_dict()
 
-        if user["id"] in configs.LISTA_ADMINS:
+        if user["id"] in self.LISTA_ADMINS:
             logger.info("User is ADMIN, skip validation")
             return True
 
-        if configs.DEBUG:
-            logger.info("DEBUG mode, skip validation")
+        if update.message.chat.id == self.GROUP_ID:
             return True
 
-        if update.message.chat.id == configs.GROUP_ID:
-            return True
+        logger.info("Invalid msg")
 
         return False
 
 
-    def _save_user(self, user):
-        self.usuarios.add(user)
-
-
     def _get_lista_presenca(self):
         """Cria o texto da lista de presença"""
+
+        lista = self.db.child("lista").get().val()
+
+        if lista:
+            lista = lista.values()
+        else:
+            lista = []
 
         # Adiciona o cabecalho
         linhas = [
@@ -484,15 +415,19 @@ class StackOvergol:
         # GOLEIROS
         todos_goleiros = []
 
-        for i, user in enumerate(self.lp_goleiros):
-            if len(self.lp_goleiros) == configs.MAX_VAGAS_GOLEIROS:
+        logger.info(lista)
+
+        lp_goleiros = [ user for user in lista if "goleiro" in user and user["goleiro"] ]
+
+        for i, user in enumerate(lp_goleiros):
+            if len(todos_goleiros) == self.MAX_VAGAS_GOLEIROS:
                 todos_goleiros.append("Lista de Espera (Goleiro):")
 
             todos_goleiros.append("{} - [{}] {} {}".format(
                 i + 1,
-                user.timestamp,
-                user.first_name,
-                user.last_name
+                user["timestamp"],
+                user["first_name"],
+                user["last_name"]
             ))
 
         linhas.append("Goleiros:")
@@ -505,8 +440,9 @@ class StackOvergol:
 
         # JOGADORES
         todos_jogadores = []
+        lp_mensalistas = [ user for user in lista if user["id"] in self.LISTA_MENSALISTAS and "goleiro" not in user ]
 
-        for i, user in enumerate(self.lp_mensalistas):
+        for i, user in enumerate(lp_mensalistas):
             todos_jogadores.append("{} - [{}] {} {} (M)".format(
                 i + 1,
                 user["timestamp"],
@@ -514,15 +450,17 @@ class StackOvergol:
                 user["last_name"]
             ))
 
-        for i, user in enumerate(self.lp_convidados):
-            if len(todos_jogadores) == configs.MAX_VAGAS_JOGADORES:
+
+        lp_convidados = [ user for user in lista if user["id"] not in self.LISTA_MENSALISTAS and "goleiro" not in user ]
+        for i, user in enumerate(lp_convidados):
+            if len(todos_jogadores) == self.MAX_VAGAS_JOGADORES:
                 todos_jogadores.append("Lista de Espera:")
 
             todos_jogadores.append("{} - [{}] {} {} (C)".format(
-                i + 1 + len(self.lp_mensalistas),
-                user.timestamp,
-                user.first_name,
-                user.last_name
+                i + 1 + len(lp_mensalistas),
+                user["timestamp"],
+                user["first_name"],
+                user["last_name"]
             ))
 
         linhas.append("Jogadores:")
@@ -531,17 +469,25 @@ class StackOvergol:
         else:
             linhas.append("----")
 
-        if len(self.lp_farrapeiros):
+        lp_farrapeiros = self.db.child("farrapeiros").get().val()
+
+        if lp_farrapeiros:
+            lp_farrapeiros = lp_farrapeiros.values()
+        else:
+            lp_farrapeiros = []
+
+        if lp_farrapeiros:
             linhas.append("=" * 15)
             linhas.append("Farrapeiros:")
 
-            for i, user in enumerate(self.lp_farrapeiros):
+            for i, user in enumerate(lp_farrapeiros):
                 linhas.append("{} - [{}] {} {} ({})".format(
                     i + 1,
                     user["timestamp"],
                     user["first_name"],
                     user["last_name"],
-                    "M" if user["id"] in configs.LISTA_MENSALISTAS else "C"
+                    "M" if user["id"] in self.LISTA_MENSALISTAS else "C"
                 ))
 
         return "\n".join(linhas)
+

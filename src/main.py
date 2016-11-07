@@ -15,13 +15,15 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-# If we don't have configs, exit!
-if not os.path.isfile('./src/configs.py'):
+try:
+    import configs
+except:
+    # If we don't have configs, exit!
     logger.error("Configs não encontradas. Copie o arquivo `./src/default_configs.py` para `./src/configs.py` e edite as configurações.")
     sys.exit(1)
 
-import configs
 from stack_overgol import StackOvergol
+
 STACK_OVERGOL_CORE = StackOvergol()
 
 
