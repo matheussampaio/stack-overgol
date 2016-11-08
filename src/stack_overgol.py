@@ -10,6 +10,50 @@ from firebase import Firebase
 
 logger = logging.getLogger(__name__)
 
+class command(object):
+    def __init__(self, onde="GRUPO", quando="ABERTO", quem=False):
+        self.onde = onde
+        self.quando = quando
+        self.quem = quem
+
+    def __call__(self, f):
+
+        def wrapper_f(_self, bot, update):
+            user = update.message.from_user.to_dict()
+
+            _self.db.child("users").child(user["id"]).set(user)
+
+            # ONDE: "GRUPO", False
+
+            if self.onde == "GRUPO" and update.message.chat.id != _self.GROUP_ID and user["id"] not in _self.LISTA_ADMINS:
+                return update.message.reply_text("Esse comando só é válido dentro do grupo.")
+
+            # QUEM: "ADMIN", "MENSALISTA", False
+
+            if self.quem == "ADMIN" and user["id"] not in _self.LISTA_ADMINS:
+                return update.message.reply_text("Comando restrito à admins.")
+
+            if self.quem == "MENSALISTA" and user["id"] not in _self.LISTA_MENSALISTAS + _self.LISTA_ADMINS:
+                return update.message.reply_text("Comando restrito à mensalistas.")
+
+            # QUANDO: "ABERTO", "FECHADO", False
+
+            try:
+                registros_abertos = _self.db.child("registros_abertos").get().val()
+            except Exception:
+                registros_abertos = False
+
+            if self.quando == "ABERTO" and not registros_abertos:
+                return update.message.reply_text("Esse comando não pode ser usado com os registros fechados.")
+
+            if self.quando == "FECHADO" and registros_abertos:
+                return update.message.reply_text("Esse comando não pode ser usado com os registros abertos.")
+
+            f(_self, bot, update, user)
+
+        return wrapper_f
+
+
 class StackOvergol:
 
     def __init__(self):
@@ -27,30 +71,8 @@ class StackOvergol:
         self.registros_abertos = self.DEBUG or self.db.child("registros_abertos").get().val()
 
 
-    def vai(self, bot, update):
-        """
-        @Comando: /vai
-        @Quem: A
-
-        Quando o admin enviar o comando, o bot deve mostrar a lista de usuários
-        que não estão na lista de presença. O usuário deve selecionar um dentre
-        as opções. O bot deve colocar o usuário selecionado na lista de
-        presença.
-        """
-
-        user = update.message.from_user.to_dict()
-
-        self.db.child("users").child(user["id"]).set(user)
-
-        if not self._is_valid_msg(update):
-            return
-
-        if not user["id"] in self.LISTA_ADMINS:
-            return
-
-        if not self.db.child("registros_abertos").get().val():
-            return update.message.reply_text("Os registros estão fechados.")
-
+    @command(quem="ADMIN")
+    def vai(self, bot, update, user):
         keyboard = []
 
         # Só mostrar os usuários que ainda não estão na lista de presença e são mensalistas
@@ -78,28 +100,8 @@ class StackOvergol:
             return update.message.reply_text("Ninguém disponivel.")
 
 
-    def nao_vai(self, bot, update):
-        """
-        @Comando: /naovai
-        @Quem: A
-
-        Quando o adimin enviar o comando, o bot irá mostrar a lista de usuários
-        que estão na lista de presença. O usuário deverá escolher um dentre as
-        opções. O bot deve retirar o usuário selecionado da lista de presença.
-        """
-        user = update.message.from_user.to_dict()
-
-        self.db.child("users").child(user["id"]).set(user)
-
-        if not self._is_valid_msg(update):
-            return
-
-        if not user["id"] in self.LISTA_ADMINS:
-            return
-
-        if not self.db.child("registros_abertos").get().val():
-            return update.message.reply_text("Os registros estão fechados.")
-
+    @command(quem="ADMIN")
+    def nao_vai(self, bot, update, user):
         keyboard = []
 
         try:
@@ -164,28 +166,8 @@ class StackOvergol:
                                    message_id=query.message.message_id)
 
 
-    def comecar(self, bot, update):
-        """
-        @Comando: /comecar
-        @Quem: A
-
-        Quando o admin enviar o comando, as listas são resetados e os comandos
-        de registros são liberados.
-        """
-
-        user = update.message.from_user.to_dict()
-
-        self.db.child("users").child(user["id"]).set(user)
-
-        if not self._is_valid_msg(update):
-            return
-
-        if not user["id"] in self.LISTA_ADMINS:
-            return
-
-        if self.db.child("registros_abertos").get().val():
-            return update.message.reply_text("Os registros já estão abertos.")
-
+    @command(quando="FECHADO", quem="ADMIN")
+    def comecar(self, bot, update, user):
         self.db.child("registros_abertos").set(True)
         self.db.child("lista").remove()
         self.db.child("farrapeiros").remove()
@@ -193,31 +175,8 @@ class StackOvergol:
         return update.message.reply_text("Registros abertos!")
 
 
-    def terminar(self, bot, update):
-        """
-        @Comando: /terminar
-        @Quem: A
-
-        Quando o admin enviar o comando, os registros serão encerrados e a
-        lista final é impressa.
-
-        @TODO: Deve definir os times.
-        @TODO: Deve sortear a ordem dos times (quem joga primeiro).
-        """
-
-        user = update.message.from_user.to_dict()
-
-        self.db.child("users").child(user["id"]).set(user)
-
-        if not self._is_valid_msg(update):
-            return
-
-        if not user["id"] in self.LISTA_ADMINS:
-            return
-
-        if not self.db.child("registros_abertos").get().val():
-            return update.message.reply_text("Os registros já estão fechados.")
-
+    @command(quem="ADMIN")
+    def terminar(self, bot, update, user):
         self.db.child("registros_abertos").set(False)
 
         lista_final = self._get_lista_presenca()
@@ -227,25 +186,8 @@ class StackOvergol:
         return update.message.reply_text(text)
 
 
-    def vou_agarrar(self, bot, update):
-        """
-        @Comando: /vouagarrar
-        @Quem: M, C
-
-        Quando o usuário enviar o comando, se não estiver em nenhuma lista,
-        adiciona o usuário na lista de goleiros.
-        """
-
-        user = update.message.from_user.to_dict()
-
-        self.db.child("users").child(user["id"]).set(user)
-
-        if not self._is_valid_msg(update):
-            return
-
-        if not self.registros_abertos:
-            return update.message.reply_text("Os registros estão fechados.")
-
+    @command()
+    def vou_agarrar(self, bot, update, user):
         self.db.child("farrapeiros").child(user["id"]).remove()
 
         user["timestamp"] = time.strftime("%X")
@@ -256,25 +198,8 @@ class StackOvergol:
         update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
 
 
-    def vou(self, bot, update):
-        """
-        @Comando: /vou
-        @Quem: M, C
-
-        Quando o usúario digitar o comando, se não estiver em nenhuma lista,
-        será adicionado.
-        """
-
-        user = update.message.from_user.to_dict()
-
-        self.db.child("users").child(user["id"]).set(user)
-
-        if not self._is_valid_msg(update):
-            return
-
-        if not self.db.child("registros_abertos").get().val():
-            return update.message.reply_text("Os registros estão fechados.")
-
+    @command()
+    def vou(self, bot, update, user):
         self.db.child("farrapeiros").child(user["id"]).remove()
 
         user["timestamp"] = time.strftime("%X")
@@ -284,25 +209,8 @@ class StackOvergol:
         update.message.reply_text("{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"]))
 
 
-    def naovou(self, bot, update):
-        """
-        @Comando: /naovou
-        @Quem: Mensalistas, Goleiros e Convidados
-
-        Quando o usuário enviar o comando, será removido da lista
-        correspondente.
-        """
-
-        user = update.message.from_user.to_dict()
-
-        self.db.child("users").child(user["id"]).set(user)
-
-        if not self._is_valid_msg(update):
-            return
-
-        if not self.db.child("registros_abertos").get().val():
-            return update.message.reply_text("Os registros estão fechados.")
-
+    @command()
+    def naovou(self, bot, update, user):
         self.db.child("lista").child(user["id"]).remove()
 
         user["timestamp"] = time.strftime("%X")
@@ -312,13 +220,8 @@ class StackOvergol:
         update.message.reply_text("{} {} removido da lista de presença.".format(user["first_name"], user["last_name"]))
 
 
-    def help(self, bot, update):
-
-        self._save_user(update.message.from_user)
-
-        if not self._is_valid_msg(update):
-            return
-
+    @command(quando=False)
+    def help(self, bot, update, user):
         admin_commands = [
             "Comandos de Bruno:",
             "/comecar: Começa os registros e reseta todas as listas.",
@@ -328,77 +231,31 @@ class StackOvergol:
         ]
 
         all_commands = [
-            "\nComandos do Resto:",
+            "\nComandos:",
             "/vou: Coloca você na lista de presença.",
             "/vouagarrar: Coloca você na lista de goleiros.",
             "/naovou: Remove você de qualquer lista de presença.",
             "/listar: Imprimi a lista atual.",
         ]
 
-        wip_commands = [
-            # "\nWorking in Progress:",
-        ]
-
-        help_text = admin_commands + all_commands + wip_commands
+        help_text = all_commands
 
         update.message.reply_text("\n".join(help_text))
 
 
-    def listar(self, bot, update):
-        """
-        @Comando: /listar
-        @Quem: M, C
-
-        Quando o usuário digitar o comando, será impresso a lista atual
-        dos goleiros, mensalistas e convidado. Também deve ser impresso a
-        situação atual dos registros (Aberto ou Fechado).
-        """
-
-        user = update.message.from_user.to_dict()
-
-        self.db.child("users").child(user["id"]).set(user)
-
-        if not self._is_valid_msg(update):
-            return
-
-        if not self.db.child("registros_abertos").get().val():
-            return update.message.reply_text("Os registros estão fechados.")
-
+    @command(quando=False)
+    def listar(self, bot, update, user):
         return update.message.reply_text(self._get_lista_presenca())
 
 
-    def uuid(self, bot, update):
-        user = update.message.from_user.to_dict()
-
-        self.db.child("users").child(user["id"]).set(user)
-
+    @command(quando=False)
+    def uuid(self, bot, update, user):
         text = "{} {}: {}".format(user["first_name"], user["last_name"], user["id"])
 
         return update.message.reply_text(text)
 
 
-    def _is_valid_msg(self, update):
-        """
-        A mensagem é válida se vier do grupo StackOvergol
-        """
-
-        user = update.message.from_user.to_dict()
-
-        if user["id"] in self.LISTA_ADMINS:
-            logger.info("User is ADMIN, skip validation")
-            return True
-
-        if update.message.chat.id == self.GROUP_ID:
-            return True
-
-        logger.info("Invalid msg")
-
-        return False
-
-
     def _get_lista_presenca(self):
-        """Cria o texto da lista de presença"""
-
         try:
             lista = self.db.child("lista").get().val().values()
         except Exception:
