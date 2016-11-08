@@ -211,13 +211,17 @@ class StackOvergol:
             config = {
                 "debug": False,
                 "group_id": -1,
-                "admins": [],
-                "mensalistas": [],
                 "max_goleiros": 2,
                 "max_jogadores": 24
             }
 
             self.db.child("config").set(config)
+
+        if "admins" not in config:
+            config["admins"] = {}
+
+        if "mensalistas" not in config:
+            config["mensalistas"] = {}
 
         self.GROUP_ID = config["group_id"]
         self.LISTA_ADMINS = [ int(key) for key in config["admins"].keys() ]
