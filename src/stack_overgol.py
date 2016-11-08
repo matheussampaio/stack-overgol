@@ -147,7 +147,7 @@ class StackOvergol:
         elif text == "Quem vai?":
             self.db.child("farrapeiros").child(user["id"]).remove()
 
-            user["timestamp"] = time.strftime("%X")
+            user["timestamp"] = int(time.time()) - 3 * 60 * 60
 
             self.db.child("lista").child(user["id"]).set(user)
 
@@ -155,7 +155,7 @@ class StackOvergol:
         else:
             self.db.child("lista").child(user["id"]).remove()
 
-            user["timestamp"] = time.strftime("%X")
+            user["timestamp"] = int(time.time()) - 3 * 60 * 60
 
             self.db.child("farrapeiros").child(user["id"]).set(user)
 
@@ -190,7 +190,7 @@ class StackOvergol:
     def vou_agarrar(self, bot, update, user):
         self.db.child("farrapeiros").child(user["id"]).remove()
 
-        user["timestamp"] = time.strftime("%X")
+        user["timestamp"] = int(time.time()) - 3 * 60 * 60
         user["goleiro"] = True
 
         self.db.child("lista").child(user["id"]).set(user)
@@ -202,7 +202,7 @@ class StackOvergol:
     def vou(self, bot, update, user):
         self.db.child("farrapeiros").child(user["id"]).remove()
 
-        user["timestamp"] = time.strftime("%X")
+        user["timestamp"] = int(time.time()) - 3 * 60 * 60
 
         self.db.child("lista").child(user["id"]).set(user)
 
@@ -213,7 +213,7 @@ class StackOvergol:
     def naovou(self, bot, update, user):
         self.db.child("lista").child(user["id"]).remove()
 
-        user["timestamp"] = time.strftime("%X")
+        user["timestamp"] = int(time.time()) - 3 * 60 * 60
 
         self.db.child("farrapeiros").child(user["id"]).set(user)
 
@@ -258,10 +258,10 @@ class StackOvergol:
     def _get_lista_presenca(self):
         try:
             lista = self.db.child("lista").get().val().values()
+            lista = sorted(lista, key=itemgetter("timestamp"))
         except Exception:
             lista = []
 
-        lista = sorted(lista, key=itemgetter("timestamp"))
 
         # Adiciona o cabecalho
         linhas = [
@@ -282,7 +282,7 @@ class StackOvergol:
 
             todos_goleiros.append("{} - [{}] {} {}".format(
                 i + 1,
-                user["timestamp"],
+                time.strftime('%a %H:%M:%S', time.gmtime(user["timestamp"])),
                 user["first_name"],
                 user["last_name"]
             ))
@@ -302,7 +302,7 @@ class StackOvergol:
         for i, user in enumerate(lp_mensalistas):
             todos_jogadores.append("{} - [{}] {} {} (M)".format(
                 i + 1,
-                user["timestamp"],
+                time.strftime('%a %H:%M:%S', time.gmtime(user["timestamp"])),
                 user["first_name"],
                 user["last_name"]
             ))
@@ -315,7 +315,7 @@ class StackOvergol:
 
             todos_jogadores.append("{} - [{}] {} {} (C)".format(
                 i + 1 + len(lp_mensalistas),
-                user["timestamp"],
+                time.strftime('%a %H:%M:%S', time.gmtime(user["timestamp"])),
                 user["first_name"],
                 user["last_name"]
             ))
@@ -326,12 +326,12 @@ class StackOvergol:
         else:
             linhas.append("----")
 
-        lp_farrapeiros = self.db.child("farrapeiros").get().val()
-
-        if lp_farrapeiros:
-            lp_farrapeiros = lp_farrapeiros.values()
-        else:
+        try:
+            lp_farrapeiros = self.db.child("farrapeiros").get().val().values()
+            lp_farrapeiros = sorted(lp_farrapeiros, key=itemgetter("timestamp"))
+        except Exception:
             lp_farrapeiros = []
+
 
         if lp_farrapeiros:
             linhas.append("=" * 15)
@@ -340,7 +340,7 @@ class StackOvergol:
             for i, user in enumerate(lp_farrapeiros):
                 linhas.append("{} - [{}] {} {} ({})".format(
                     i + 1,
-                    user["timestamp"],
+                    time.strftime('%a %H:%M:%S', time.gmtime(user["timestamp"])),
                     user["first_name"],
                     user["last_name"],
                     "M" if user["id"] in self.LISTA_MENSALISTAS else "C"

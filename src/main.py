@@ -5,12 +5,12 @@ import os
 import sys
 import logging
 
-os.environ['TZ'] = 'America/Recife'
+os.environ["TZ"] = "America/Recife"
 
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 # Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
                     level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
