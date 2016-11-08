@@ -2,14 +2,14 @@ Stack Overgol Bot
 =================
 
 ## Requirements:
-- Python 3
-- PIP
-- Virtualenv
+- python3 and python3-dev
+- pip
+- virtualenv
 
 ## How to:
 ```
 $ # clone project and cd to it
-$ virtualenv venv
+$ virtualenv -p python3 venv
 $ source venv/bin/activate
 $ pip install -r requirements.txt
 $ cp src/default_configs.py src/configs.py

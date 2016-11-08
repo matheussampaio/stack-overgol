@@ -254,8 +254,15 @@ class StackOvergol:
 
         return update.message.reply_text(text)
 
+    def _show_timestamp(self, user, with_time):
+        if with_time:
+            timestamp = time.strftime('%a %H:%M:%S', time.gmtime(user["timestamp"]))
+            return "[{}] ".format(timestamp)
 
-    def _get_lista_presenca(self):
+        return ""
+
+
+    def _get_lista_presenca(self, with_time=False):
         try:
             lista = self.db.child("lista").get().val().values()
             lista = sorted(lista, key=itemgetter("timestamp"))
@@ -280,9 +287,9 @@ class StackOvergol:
             if len(todos_goleiros) == self.MAX_VAGAS_GOLEIROS:
                 todos_goleiros.append("Lista de Espera (Goleiro):")
 
-            todos_goleiros.append("{} - [{}] {} {}".format(
+            todos_goleiros.append("{} - {}{} {}".format(
                 i + 1,
-                time.strftime('%a %H:%M:%S', time.gmtime(user["timestamp"])),
+                self._show_timestamp(user, with_time),
                 user["first_name"],
                 user["last_name"]
             ))
@@ -300,9 +307,9 @@ class StackOvergol:
         lp_mensalistas = [ user for user in lista if user["id"] in self.LISTA_MENSALISTAS and "goleiro" not in user ]
 
         for i, user in enumerate(lp_mensalistas):
-            todos_jogadores.append("{} - [{}] {} {} (M)".format(
+            todos_jogadores.append("{} - {}{} {} (M)".format(
                 i + 1,
-                time.strftime('%a %H:%M:%S', time.gmtime(user["timestamp"])),
+                self._show_timestamp(user, with_time),
                 user["first_name"],
                 user["last_name"]
             ))
@@ -313,9 +320,9 @@ class StackOvergol:
             if len(todos_jogadores) == self.MAX_VAGAS_JOGADORES:
                 todos_jogadores.append("Lista de Espera:")
 
-            todos_jogadores.append("{} - [{}] {} {} (C)".format(
+            todos_jogadores.append("{} - {}{} {} (C)".format(
                 i + 1 + len(lp_mensalistas),
-                time.strftime('%a %H:%M:%S', time.gmtime(user["timestamp"])),
+                self._show_timestamp(user, with_time),
                 user["first_name"],
                 user["last_name"]
             ))
@@ -338,9 +345,9 @@ class StackOvergol:
             linhas.append("Farrapeiros:")
 
             for i, user in enumerate(lp_farrapeiros):
-                linhas.append("{} - [{}] {} {} ({})".format(
+                linhas.append("{} - {}{} {} ({})".format(
                     i + 1,
-                    time.strftime('%a %H:%M:%S', time.gmtime(user["timestamp"])),
+                    self._show_timestamp(user, with_time),
                     user["first_name"],
                     user["last_name"],
                     "M" if user["id"] in self.LISTA_MENSALISTAS else "C"
