@@ -5,7 +5,7 @@ import os
 import sys
 import logging
 
-os.environ['TZ'] = 'Brazil/East'
+os.environ['TZ'] = 'America/Recife'
 
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 

@@ -399,12 +399,12 @@ class StackOvergol:
     def _get_lista_presenca(self):
         """Cria o texto da lista de presença"""
 
-        lista = self.db.child("lista").get().val()
-
-        if lista:
-            lista = lista.values()
-        else:
+        try:
+            lista = self.db.child("lista").get().val().values()
+        except Exception:
             lista = []
+
+        lista = sorted(lista, key=itemgetter("timestamp"))
 
         # Adiciona o cabecalho
         linhas = [
