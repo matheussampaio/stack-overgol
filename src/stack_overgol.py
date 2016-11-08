@@ -6,79 +6,26 @@ from operator import itemgetter
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+from command import Command
 from firebase import Firebase
 
 logger = logging.getLogger(__name__)
-
-class command(object):
-    def __init__(self, onde="GRUPO", quando="ABERTO", quem=False):
-        self.onde = onde
-        self.quando = quando
-        self.quem = quem
-
-    def __call__(self, f):
-
-        def wrapper_f(_self, bot, update):
-            user = update.message.from_user.to_dict()
-
-            _self.db.child("users").child(user["id"]).set(user)
-
-            # ONDE: "GRUPO", False
-
-            if self.onde == "GRUPO" and update.message.chat.id != _self.GROUP_ID and user["id"] not in _self.LISTA_ADMINS:
-                return update.message.reply_text("Esse comando só é válido dentro do grupo.")
-
-            # QUEM: "ADMIN", "MENSALISTA", False
-
-            if self.quem == "ADMIN" and user["id"] not in _self.LISTA_ADMINS:
-                return update.message.reply_text("Comando restrito à admins.")
-
-            if self.quem == "MENSALISTA" and user["id"] not in _self.LISTA_MENSALISTAS + _self.LISTA_ADMINS:
-                return update.message.reply_text("Comando restrito à mensalistas.")
-
-            # QUANDO: "ABERTO", "FECHADO", False
-
-            try:
-                registros_abertos = _self.db.child("registros_abertos").get().val()
-            except Exception:
-                registros_abertos = False
-
-            if self.quando == "ABERTO" and not registros_abertos:
-                return update.message.reply_text("Esse comando não pode ser usado com os registros fechados.")
-
-            if self.quando == "FECHADO" and registros_abertos:
-                return update.message.reply_text("Esse comando não pode ser usado com os registros abertos.")
-
-            f(_self, bot, update, user)
-
-        return wrapper_f
-
 
 class StackOvergol:
 
     def __init__(self):
         self.db = Firebase.get_database()
 
-        config = self.db.child("config").get().val()
+        self._load_configs()
 
-        self.DEBUG = config["debug"]
-        self.GROUP_ID = config["group_id"]
-        self.LISTA_ADMINS = [ int(key) for key in config["admins"].keys() ]
-        self.LISTA_MENSALISTAS = [ int(key) for key in config["mensalistas"].keys() ]
-        self.MAX_VAGAS_GOLEIROS = config["max_goleiros"]
-        self.MAX_VAGAS_JOGADORES = config["max_jogadores"]
-
-        self.registros_abertos = self.DEBUG or self.db.child("registros_abertos").get().val()
-
-
-    @command(quem="ADMIN")
+    @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
     def vai(self, bot, update, user):
         keyboard = []
 
         # Só mostrar os usuários que ainda não estão na lista de presença e são mensalistas
         try:
             todos_usuarios = self.db.child("users").get().val().values()
-        except Exception:
+        except AttributeError:
             return update.message.reply_text("Ninguém disponivel.")
 
         mensalistas = [ user for user in todos_usuarios if user["id"] in self.LISTA_MENSALISTAS ]
@@ -100,13 +47,13 @@ class StackOvergol:
             return update.message.reply_text("Ninguém disponivel.")
 
 
-    @command(quem="ADMIN")
+    @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
     def nao_vai(self, bot, update, user):
         keyboard = []
 
         try:
             lista_presenca = self.db.child("lista").get().val().values()
-        except Exception:
+        except AttributeError:
             return update.message.reply_text("Lista de presença vazia.")
 
         for user in lista_presenca:
@@ -166,7 +113,7 @@ class StackOvergol:
                                    message_id=query.message.message_id)
 
 
-    @command(quando="FECHADO", quem="ADMIN")
+    @Command(onde="GRUPO", quando="FECHADO", quem="ADMIN")
     def comecar(self, bot, update, user):
         self.db.child("registros_abertos").set(True)
         self.db.child("lista").remove()
@@ -175,7 +122,7 @@ class StackOvergol:
         return update.message.reply_text("Registros abertos!")
 
 
-    @command(quem="ADMIN")
+    @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
     def terminar(self, bot, update, user):
         self.db.child("registros_abertos").set(False)
 
@@ -186,7 +133,7 @@ class StackOvergol:
         return update.message.reply_text(text)
 
 
-    @command()
+    @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou_agarrar(self, bot, update, user):
         self.db.child("farrapeiros").child(user["id"]).remove()
 
@@ -195,10 +142,10 @@ class StackOvergol:
 
         self.db.child("lista").child(user["id"]).set(user)
 
-        update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
+        return update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
 
 
-    @command()
+    @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou(self, bot, update, user):
         self.db.child("farrapeiros").child(user["id"]).remove()
 
@@ -206,10 +153,10 @@ class StackOvergol:
 
         self.db.child("lista").child(user["id"]).set(user)
 
-        update.message.reply_text("{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"]))
+        return update.message.reply_text("{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"]))
 
 
-    @command()
+    @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def naovou(self, bot, update, user):
         self.db.child("lista").child(user["id"]).remove()
 
@@ -217,10 +164,10 @@ class StackOvergol:
 
         self.db.child("farrapeiros").child(user["id"]).set(user)
 
-        update.message.reply_text("{} {} removido da lista de presença.".format(user["first_name"], user["last_name"]))
+        return update.message.reply_text("{} {} removido da lista de presença.".format(user["first_name"], user["last_name"]))
 
 
-    @command(quando=False)
+    @Command(onde="GRUPO", quando=False, quem=False)
     def help(self, bot, update, user):
         admin_commands = [
             "Comandos de Bruno:",
@@ -240,19 +187,44 @@ class StackOvergol:
 
         help_text = all_commands
 
-        update.message.reply_text("\n".join(help_text))
+        return update.message.reply_text("\n".join(help_text))
 
 
-    @command(quando=False)
+    @Command(onde="GRUPO", quando=False, quem=False)
     def listar(self, bot, update, user):
         return update.message.reply_text(self._get_lista_presenca())
 
 
-    @command(quando=False)
+    @Command(onde="GRUPO", quando=False, quem=False)
     def uuid(self, bot, update, user):
         text = "{} {}: {}".format(user["first_name"], user["last_name"], user["id"])
 
         return update.message.reply_text(text)
+
+
+    def _load_configs(self):
+        self.DEBUG = self.db.child("debug").get().val()
+
+        config = self.db.child("config").get().val()
+
+        if not config:
+            config = {
+                "debug": False,
+                "group_id": -1,
+                "admins": [],
+                "mensalistas": [],
+                "max_goleiros": 2,
+                "max_jogadores": 24
+            }
+
+            self.db.child("config").set(config)
+
+        self.GROUP_ID = config["group_id"]
+        self.LISTA_ADMINS = [ int(key) for key in config["admins"].keys() ]
+        self.LISTA_MENSALISTAS = [ int(key) for key in config["mensalistas"].keys() ]
+        self.MAX_VAGAS_GOLEIROS = config["max_goleiros"]
+        self.MAX_VAGAS_JOGADORES = config["max_jogadores"]
+
 
     def _show_timestamp(self, user, with_time):
         if with_time:
@@ -266,9 +238,10 @@ class StackOvergol:
         try:
             lista = self.db.child("lista").get().val().values()
             lista = sorted(lista, key=itemgetter("timestamp"))
-        except Exception:
+        except AttributeError:
             lista = []
 
+        self._load_configs()
 
         # Adiciona o cabecalho
         linhas = [
@@ -318,7 +291,7 @@ class StackOvergol:
         lp_convidados = [ user for user in lista if user["id"] not in self.LISTA_MENSALISTAS and "goleiro" not in user ]
         for i, user in enumerate(lp_convidados):
             if len(todos_jogadores) == self.MAX_VAGAS_JOGADORES:
-                todos_jogadores.append("Lista de Espera:")
+                todos_jogadores.append("\nLista de Espera:")
 
             todos_jogadores.append("{} - {}{} {} (C)".format(
                 i + 1 + len(lp_mensalistas),
@@ -336,7 +309,7 @@ class StackOvergol:
         try:
             lp_farrapeiros = self.db.child("farrapeiros").get().val().values()
             lp_farrapeiros = sorted(lp_farrapeiros, key=itemgetter("timestamp"))
-        except Exception:
+        except AttributeError:
             lp_farrapeiros = []
 
 
