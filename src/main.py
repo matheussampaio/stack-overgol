@@ -38,7 +38,8 @@ def main():
     dp = updater.dispatcher
 
     # ADMIN
-    dp.add_handler(CommandHandler("comecar", STACK_OVERGOL_CORE.comecar))
+    dp.add_handler(CommandHandler("agendar", STACK_OVERGOL_CORE.agendar, pass_args=True, pass_job_queue=True))
+    dp.add_handler(CommandHandler("comecar", STACK_OVERGOL_CORE.comecar, pass_args=True))
     dp.add_handler(CommandHandler("terminar", STACK_OVERGOL_CORE.terminar))
     dp.add_handler(CommandHandler("vai", STACK_OVERGOL_CORE.vai))
     dp.add_handler(CommandHandler("naovai", STACK_OVERGOL_CORE.nao_vai))

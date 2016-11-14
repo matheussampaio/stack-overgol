@@ -10,7 +10,7 @@ class Command(object):
 
     def __call__(self, f):
 
-        def wrapper_f(_self, bot, update):
+        def wrapper_f(_self, bot, update, *args, **kwargs):
             user = update.message.from_user.to_dict()
 
             _self.db.child("users").child(user["id"]).set(user)
@@ -32,7 +32,7 @@ class Command(object):
 
             try:
                 registros_abertos = _self.db.child("registros_abertos").get().val()
-            except Exception:
+            except AttributeError:
                 registros_abertos = False
 
             if self.quando == "ABERTO" and not registros_abertos:
@@ -41,6 +41,6 @@ class Command(object):
             if self.quando == "FECHADO" and registros_abertos:
                 return update.message.reply_text("Esse comando não pode ser usado com os registros abertos.")
 
-            f(_self, bot, update, user)
+            f(_self, bot, update, user, *args, **kwargs)
 
         return wrapper_f
