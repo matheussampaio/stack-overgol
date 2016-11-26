@@ -39,8 +39,10 @@ def main():
 
     # ADMIN
     dp.add_handler(CommandHandler("agendar", STACK_OVERGOL_CORE.agendar, pass_args=True, pass_job_queue=True))
-    dp.add_handler(CommandHandler("comecar", STACK_OVERGOL_CORE.comecar, pass_args=True))
-    dp.add_handler(CommandHandler("terminar", STACK_OVERGOL_CORE.terminar))
+    dp.add_handler(CommandHandler("abrir", STACK_OVERGOL_CORE.abrir))
+    dp.add_handler(CommandHandler("fechar", STACK_OVERGOL_CORE.fechar))
+    dp.add_handler(CommandHandler("resetar", STACK_OVERGOL_CORE.resetar))
+    dp.add_handler(CommandHandler("data", STACK_OVERGOL_CORE.data, pass_args=True))
     dp.add_handler(CommandHandler("vai", STACK_OVERGOL_CORE.vai))
     dp.add_handler(CommandHandler("naovai", STACK_OVERGOL_CORE.nao_vai))
 

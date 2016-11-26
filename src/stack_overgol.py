@@ -118,24 +118,29 @@ class StackOvergol:
 
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
-    def comecar(self, bot, update, user, *args, **kwargs):
-        self._comecar()
-
-        self.db.child("data_racha").set(kwargs["args"][0] + " " + kwargs["args"][1])
-
+    def abrir(self, bot, update, user, *args, **kwargs):
+        self.db.child("registros_abertos").set(True)
         return update.message.reply_text("Registros abertos!")
 
 
-    def _comecar_agendar(self, bot, job):
-        self._comecar()
-
-        bot.sendMessage(job.context, text="Registros abertos!")
-
-
-    def _comecar(self):
+    def abrir_job(self, bot, job):
         self.db.child("registros_abertos").set(True)
+        return bot.sendMessage(job.context, text="Registros abertos!")
+
+
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def data(self, bot, update, user, *args, **kwargs):
+        data = kwargs["args"][0] + " " + kwargs["args"][1]
+        self.db.child("data_racha").set(data)
+
+        return update.message.reply_text("Data do proximo racha: {}".format(data))
+
+
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def resetar(self, bot, update, user, *args, **kwargs):
         self.db.child("lista").remove()
         self.db.child("farrapeiros").remove()
+        return update.message.reply_text("Registros resetados")
 
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
@@ -151,8 +156,11 @@ class StackOvergol:
             self.terminar_job.schedule_removal()
             self.terminar_job = None
 
-        epoch_comecar = time.mktime(time.strptime(kwargs["args"][0] + " " + kwargs["args"][1], "%H:%Mh %d/%m/%y"))
-        epoch_terminar = time.mktime(time.strptime(kwargs["args"][2] + " " + kwargs["args"][3], "%H:%Mh %d/%m/%y"))
+        hora_de_abrir = kwargs["args"][0] + " " + kwargs["args"][1]
+        hora_de_fechar = kwargs["args"][2] + " " + kwargs["args"][3]
+
+        epoch_comecar = time.mktime(time.strptime(hora_de_abrir, "%H:%Mh %d/%m/%y"))
+        epoch_terminar = time.mktime(time.strptime(hora_de_fechar, "%H:%Mh %d/%m/%y"))
 
         logging.info("now %d", now)
         logging.info("comecar %d", epoch_comecar)
@@ -165,8 +173,8 @@ class StackOvergol:
         elif epoch_comecar > epoch_terminar:
             return update.message.reply_text("error: comecar > terminar")
 
-        self.comecar_job = Job(self._comecar_agendar, epoch_comecar - now, repeat=False, context=chat_id)
-        self.terminar_job = Job(self._terminar_agendar, epoch_terminar - now, repeat=False, context=chat_id)
+        self.comecar_job = Job(self.abrir_job, epoch_comecar - now, repeat=False, context=chat_id)
+        self.terminar_job = Job(self.fechar_job, epoch_terminar - now, repeat=False, context=chat_id)
 
         if "job_queue" not in kwargs:
             return update.message.reply_text("error: cant find job_queue")
@@ -174,28 +182,26 @@ class StackOvergol:
         kwargs["job_queue"].put(self.comecar_job)
         kwargs["job_queue"].put(self.terminar_job)
 
-        self.db.child("hora_comecar_registros").set(kwargs["args"][0] + " " + kwargs["args"][1])
-        self.db.child("hora_terminar_registros").set(kwargs["args"][2] + " " + kwargs["args"][3])
-        self.db.child("data_racha").set(kwargs["args"][4] + " " + kwargs["args"][5])
+        self.db.child("hora_comecar_registros").set(hora_de_abrir)
+        self.db.child("hora_terminar_registros").set(hora_de_fechar)
 
-        return update.message.reply_text("agendado")
+        text = "Racha agendado. Registros começam {} e fecham de {}.".format(
+                    hora_de_abrir,
+                    hora_de_fechar
+                )
+
+        return update.message.reply_text(text)
 
 
-    @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
-    def terminar(self, bot, update, user, *args, **kwargs):
-        self._terminar()
-
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def fechar(self, bot, update, user, *args, **kwargs):
+        self.db.child("registros_abertos").set(False)
         return update.message.reply_text("Registros fechados")
 
 
-    def _terminar_agendar(self, bot, job):
-        self._terminar()
-
-        return bot.sendMessage(job.context, text="Registros fechados")
-
-
-    def _terminar(self):
+    def fechar_job(self, bot, job):
         self.db.child("registros_abertos").set(False)
+        return bot.sendMessage(job.context, text="Registros fechados")
 
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
