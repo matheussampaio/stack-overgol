@@ -60,7 +60,9 @@ class StackOvergol:
         except AttributeError:
             return update.message.reply_text("Lista de presença vazia.")
 
-        for user in lista_presenca:
+        lista_presenca_ordenada = sorted(lista_presenca, key=itemgetter("first_name", "last_name"))
+
+        for user in lista_presenca_ordenada:
             user_name = "{} {}".format(user["first_name"], user["last_name"])
             botao = InlineKeyboardButton(user_name, callback_data=str(user["id"]))
             keyboard.append([ botao ])
@@ -92,8 +94,13 @@ class StackOvergol:
                                        message_id=query.message.message_id)
 
         user = self.db.child("users").child(data).get().val()
+
+        # If we can't find this user, it's problably a guest
         if not user:
-            message = "Nenhum usuário com id: {}".format(data)
+            convidado = self.db.child("lista").child(data).get().val()
+            self.db.child("lista").child(data).remove()
+
+            message = "{} {} removido da lista de presença.".format(convidado["first_name"], convidado["last_name"])
 
         elif text == "Quem vai?":
             self.db.child("farrapeiros").child(user["id"]).remove()
@@ -206,6 +213,11 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou_agarrar(self, bot, update, user, *args, **kwargs):
+        user = self.db.child("lista").child(user["id"]).get().val()
+
+        if (user):
+            return update.message.reply_text("Você já está na lista.")
+
         self.db.child("farrapeiros").child(user["id"]).remove()
 
         user["timestamp"] = int(time.time()) - 3 * 60 * 60
@@ -216,8 +228,36 @@ class StackOvergol:
         return update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
 
 
+    @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
+    def convidado(self, bot, update, user, *args, **kwargs):
+        first_name = kwargs["args"][0]
+        last_name = kwargs["args"][1]
+
+        convidado = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "timestamp": int(time.time()) - 3 * 60 * 60
+        }
+
+        convidado["id"] = user["id"] + convidado["timestamp"]
+
+        logger.info("convidado ojb")
+        logger.info(convidado)
+
+        self.db.child("lista").child(convidado["id"]).set(convidado)
+
+        msg = "{} {} adicionado à lista de presença.".format(convidado["first_name"], convidado["last_name"])
+
+        return update.message.reply_text(msg)
+
+
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou(self, bot, update, user, *args, **kwargs):
+        user = self.db.child("lista").child(user["id"]).get().val()
+
+        if (user):
+            return update.message.reply_text("Você já está na lista.")
+
         self.db.child("farrapeiros").child(user["id"]).remove()
 
         user["timestamp"] = int(time.time()) - 3 * 60 * 60
