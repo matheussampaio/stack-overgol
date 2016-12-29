@@ -38,8 +38,11 @@ def main():
     dp = updater.dispatcher
 
     # ADMIN
-    dp.add_handler(CommandHandler("agendar", STACK_OVERGOL_CORE.agendar, pass_args=True, pass_job_queue=True))
-    dp.add_handler(CommandHandler("convidado", STACK_OVERGOL_CORE.convidado, pass_args=True, pass_job_queue=True))
+    dp.add_handler(CommandHandler("agendar_abrir", STACK_OVERGOL_CORE.agendar_abrir, pass_args=True, pass_job_queue=True))
+    dp.add_handler(CommandHandler("cancelar_abrir", STACK_OVERGOL_CORE.cancelar_abrir))
+    dp.add_handler(CommandHandler("agendar_fechar", STACK_OVERGOL_CORE.agendar_fechar, pass_args=True, pass_job_queue=True))
+    dp.add_handler(CommandHandler("cancelar_fechar", STACK_OVERGOL_CORE.cancelar_fechar))
+    dp.add_handler(CommandHandler("convidado", STACK_OVERGOL_CORE.convidado, pass_args=True))
     dp.add_handler(CommandHandler("abrir", STACK_OVERGOL_CORE.abrir))
     dp.add_handler(CommandHandler("fechar", STACK_OVERGOL_CORE.fechar))
     dp.add_handler(CommandHandler("resetar", STACK_OVERGOL_CORE.resetar))
