@@ -213,9 +213,7 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou_agarrar(self, bot, update, user, *args, **kwargs):
-        user = self.db.child("lista").child(user["id"]).get().val()
-
-        if (user):
+        if (self.db.child("lista").child(user["id"]).get().val()):
             return update.message.reply_text("Você já está na lista.")
 
         self.db.child("farrapeiros").child(user["id"]).remove()
@@ -253,9 +251,7 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou(self, bot, update, user, *args, **kwargs):
-        user = self.db.child("lista").child(user["id"]).get().val()
-
-        if (user):
+        if (self.db.child("lista").child(user["id"]).get().val()):
             return update.message.reply_text("Você já está na lista.")
 
         self.db.child("farrapeiros").child(user["id"]).remove()
