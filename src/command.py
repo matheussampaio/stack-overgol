@@ -15,32 +15,30 @@ class Command(object):
 
             _self.db.child("users").child(user["id"]).set(user)
 
-            # ONDE: "GRUPO", False
+            group_id = update.message.chat.id
+            group_value = _self.db.child("groups").child(group_id).get().val()
 
-            if self.onde == "GRUPO" and update.message.chat.id != _self.GROUP_ID and user["id"] not in _self.LISTA_ADMINS:
+            user["is_admin"] = bool(str(user["id"]) in group_value["admins"])
+            user["is_mensalista"] = bool(str(user["id"]) in group_value["mensalistas"])
+
+            # ONDE: "GRUPO", False
+            if self.onde == "GRUPO" and not group_value:
                 return update.message.reply_text("Esse comando só é válido dentro do grupo.")
 
             # QUEM: "ADMIN", "MENSALISTA", False
-
-            if self.quem == "ADMIN" and user["id"] not in _self.LISTA_ADMINS:
+            if self.quem == "ADMIN" and not user["is_admin"]:
                 return update.message.reply_text("Comando restrito à admins.")
 
-            if self.quem == "MENSALISTA" and user["id"] not in _self.LISTA_MENSALISTAS + _self.LISTA_ADMINS:
+            if self.quem == "MENSALISTA" and not (user["is_mensalista"] or user["is_admin"]):
                 return update.message.reply_text("Comando restrito à mensalistas.")
 
             # QUANDO: "ABERTO", "FECHADO", False
-
-            try:
-                registros_abertos = _self.db.child("registros_abertos").get().val()
-            except AttributeError:
-                registros_abertos = False
-
-            if self.quando == "ABERTO" and not registros_abertos:
+            if self.quando == "ABERTO" and not group_value["registros_abertos"]:
                 return update.message.reply_text("Esse comando não pode ser usado com os registros fechados.")
 
-            if self.quando == "FECHADO" and registros_abertos:
+            if self.quando == "FECHADO" and group_value["registros_abertos"]:
                 return update.message.reply_text("Esse comando não pode ser usado com os registros abertos.")
 
-            f(_self, bot, update, user, *args, **kwargs)
+            f(_self, bot, update, user, group_id, *args, **kwargs)
 
         return wrapper_f

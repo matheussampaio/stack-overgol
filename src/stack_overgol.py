@@ -4,7 +4,7 @@ import time
 import logging
 from operator import itemgetter
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import Job
 
 from command import Command
@@ -17,10 +17,9 @@ class StackOvergol:
     def __init__(self):
         self.db = Firebase.get_database()
 
-        self.abrir_job_instance = None
-        self.fechar_job_instance = None
+        self.abrir_job_instances = {}
+        self.fechar_job_instances = {}
 
-        self._load_configs()
 
     @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
     def vai(self, bot, update, user, *args, **kwargs):
@@ -32,7 +31,8 @@ class StackOvergol:
         except AttributeError:
             return update.message.reply_text("Ninguém disponivel.")
 
-        mensalistas = [ user for user in todos_usuarios if user["id"] in self.LISTA_MENSALISTAS ]
+        lista_mensalistas = self.getGroup(update).child("mensalistas").get().val()
+        mensalistas = [user for user in todos_usuarios if str(user["id"]) in lista_mensalistas]
 
         mensalistas_ordenados = sorted(mensalistas, key=itemgetter("first_name", "last_name"))
 
@@ -56,7 +56,7 @@ class StackOvergol:
         keyboard = []
 
         try:
-            lista_presenca = self.db.child("lista").get().val().values()
+            lista_presenca = self.getGroup(update).child("lista").get().val().values()
         except AttributeError:
             return update.message.reply_text("Lista de presença vazia.")
 
@@ -65,10 +65,10 @@ class StackOvergol:
         for user in lista_presenca_ordenada:
             user_name = "{} {}".format(user["first_name"], user["last_name"])
             botao = InlineKeyboardButton(user_name, callback_data=str(user["id"]))
-            keyboard.append([ botao ])
+            keyboard.append([botao])
 
         botao_cancelar = InlineKeyboardButton("Cancelar", callback_data="-1")
-        keyboard.append([ botao_cancelar ])
+        keyboard.append([botao_cancelar])
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -83,7 +83,9 @@ class StackOvergol:
 
         from_user = query_dict["from"]
 
-        if not from_user["id"] in self.LISTA_ADMINS:
+        group_value = self.getGroup(query).get().val()
+
+        if not str(from_user["id"]) in group_value["admins"]:
             return
 
         data = query_dict["data"]
@@ -97,25 +99,25 @@ class StackOvergol:
 
         # If we can't find this user, it's problably a guest
         if not user:
-            convidado = self.db.child("lista").child(data).get().val()
-            self.db.child("lista").child(data).remove()
+            convidado = self.getGroup(query).child("lista").child(data).get().val()
+            self.getGroup(query).child("lista").child(data).remove()
 
             message = "{} {} removido da lista de presença.".format(convidado["first_name"], convidado["last_name"])
 
         elif text == "Quem vai?":
-            self.db.child("farrapeiros").child(user["id"]).remove()
+            self.getGroup(query).child("farrapeiros").child(user["id"]).remove()
 
             user["timestamp"] = int(time.time()) - 3 * 60 * 60
 
-            self.db.child("lista").child(user["id"]).set(user)
+            self.getGroup(query).child("lista").child(user["id"]).set(user)
 
             message = "{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"])
         else:
-            self.db.child("lista").child(user["id"]).remove()
+            self.getGroup(query).child("lista").child(user["id"]).remove()
 
             user["timestamp"] = int(time.time()) - 3 * 60 * 60
 
-            self.db.child("farrapeiros").child(user["id"]).set(user)
+            self.getGroup(query).child("farrapeiros").child(user["id"]).set(user)
 
             message = "{} {} removido da lista de presença.".format(user["first_name"], user["last_name"])
 
@@ -126,18 +128,24 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def data(self, bot, update, user, *args, **kwargs):
+        if len(kwargs["args"]) != 2:
+            return update.message.reply_text(
+                    text="Comando incorreto. `/data <hora> <dia>`",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+
         data = kwargs["args"][0] + " " + kwargs["args"][1]
-        self.db.child("data_racha").set(data)
+        self.getGroup(update).child("data_racha").set(data)
 
         return update.message.reply_text("Data do proximo racha: {}".format(data))
 
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def resetar(self, bot, update, user, *args, **kwargs):
-        self.db.child("lista").remove()
-        self.db.child("farrapeiros").remove()
-        self.db.child("data_racha").set(" ")
-        self.db.child("registros_abertos").set(False)
+        self.getGroup(update).child("lista").remove()
+        self.getGroup(update).child("farrapeiros").remove()
+        self.getGroup(update).child("data_racha").set(" ")
+        self.getGroup(update).child("registros_abertos").set(False)
 
         if self.abrir_job_instance:
             self.abrir_job_instance.schedule_removal()
@@ -154,9 +162,9 @@ class StackOvergol:
         now = time.time()
         chat_id = update.message.chat_id
 
-        if self.abrir_job_instance:
-            self.abrir_job_instance.schedule_removal()
-            self.abrir_job_instance = None
+        if chat_id in self.abrir_job_instances:
+            self.abrir_job_instances[chat_id].schedule_removal()
+            self.abrir_job_instances.pop(chat_id, None)
 
         hora_de_abrir = kwargs["args"][0] + " " + kwargs["args"][1]
 
@@ -165,11 +173,11 @@ class StackOvergol:
         if epoch_abrir < now:
             return update.message.reply_text("error: comecar < now")
 
-        self.abrir_job_instance = Job(self.abrir_job, epoch_abrir - now, repeat=False, context=chat_id)
+        self.abrir_job_instances[chat_id] = Job(lambda bot, job: self.abrir_job(bot, job, update), epoch_abrir - now, repeat=False, context=chat_id)
 
-        kwargs["job_queue"].put(self.abrir_job_instance)
+        kwargs["job_queue"].put(self.abrir_job_instances[chat_id])
 
-        self.db.child("hora_abrir_registros").set(hora_de_abrir)
+        self.getGroup(update).child("hora_abrir_registros").set(hora_de_abrir)
 
         text = "Registros abrem {}.".format(hora_de_abrir)
 
@@ -178,21 +186,31 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def cancelar_abrir(self, bot, update, user, *args, **kwargs):
-        if self.abrir_job_instance:
-            self.abrir_job_instance.schedule_removal()
-            self.abrir_job_instance = None
+        chat_id = update.message.chat_id
+
+        if chat_id in self.abrir_job_instances:
+            self.abrir_job_instances[chat_id].schedule_removal()
+            self.abrir_job_instances.pop(chat_id, None)
 
             return update.message.reply_text("Agendamento para abrir cancelado.")
 
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def abrir(self, bot, update, user, *args, **kwargs):
-        self.db.child("registros_abertos").set(True)
+        self.getGroup(update).child("registros_abertos").set(True)
+
         return update.message.reply_text("Registros abertos!")
 
 
-    def abrir_job(self, bot, job):
-        self.db.child("registros_abertos").set(True)
+    def abrir_job(self, bot, job, update):
+        self.getGroup(update).child("registros_abertos").set(True)
+
+        chat_id = update.message.chat_id
+
+        if chat_id in self.abrir_job_instances:
+            self.abrir_job_instances[chat_id].schedule_removal()
+            self.abrir_job_instances.pop(chat_id, None)
+
         return bot.sendMessage(job.context, text="Registros abertos!")
 
 
@@ -201,9 +219,9 @@ class StackOvergol:
         now = time.time()
         chat_id = update.message.chat_id
 
-        if self.fechar_job_instance:
-            self.fechar_job_instance.schedule_removal()
-            self.fechar_job_instance = None
+        if chat_id in self.fechar_job_instances:
+            self.fechar_job_instances[chat_id].schedule_removal()
+            self.fechar_job_instances.pop(chat_id, None)
 
         hora_de_fechar = kwargs["args"][0] + " " + kwargs["args"][1]
 
@@ -212,11 +230,11 @@ class StackOvergol:
         if epoch_fechar < now:
             return update.message.reply_text("error: terminar < now")
 
-        self.fechar_job_instance = Job(self.fechar_job, epoch_fechar - now, repeat=False, context=chat_id)
+        self.fechar_job_instances[chat_id] = Job(lambda bot, job: self.fechar_job(bot, job, update), epoch_fechar - now, repeat=False, context=chat_id)
 
-        kwargs["job_queue"].put(self.fechar_job_instance)
+        kwargs["job_queue"].put(self.fechar_job_instances[chat_id])
 
-        self.db.child("hora_fechar_registros").set(hora_de_fechar)
+        self.getGroup(update).child("hora_fechar_registros").set(hora_de_fechar)
 
         text = "Registros fecham de {}.".format(hora_de_fechar)
 
@@ -225,35 +243,48 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def cancelar_fechar(self, bot, update, user, *args, **kwargs):
-        if self.fechar_job_instance:
-            self.fechar_job_instance.schedule_removal()
-            self.fechar_job_instance = None
+        chat_id = update.message.chat_id
+
+        if chat_id in self.fechar_job_instances:
+            self.fechar_job_instances[chat_id].schedule_removal()
+            self.fechar_job_instances.pop(chat_id, None)
 
             return update.message.reply_text("Agendamento para fechar cancelado.")
 
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def fechar(self, bot, update, user, *args, **kwargs):
-        self.db.child("registros_abertos").set(False)
+        self.getGroup(update).child("registros_abertos").set(False)
+
         return update.message.reply_text("Registros fechados")
 
 
-    def fechar_job(self, bot, job):
-        self.db.child("registros_abertos").set(False)
+    def fechar_job(self, bot, job, update):
+        self.getGroup(update).child("registros_abertos").set(False)
+
+        chat_id = update.message.chat_id
+
+        if chat_id in self.fechar_job_instances:
+            self.fechar_job_instances[chat_id].schedule_removal()
+            self.fechar_job_instances.pop(chat_id, None)
+
         return bot.sendMessage(job.context, text="Registros fechados")
 
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou_agarrar(self, bot, update, user, *args, **kwargs):
-        if (self.db.child("lista").child(user["id"]).get().val()):
+        if (self.getGroup(update).child("lista").child(user["id"]).get().val()):
             return update.message.reply_text("Você já está na lista.")
 
-        self.db.child("farrapeiros").child(user["id"]).remove()
+        self.getGroup(update).child("farrapeiros").child(user["id"]).remove()
 
-        user["timestamp"] = int(time.time()) - 3 * 60 * 60
-        user["goleiro"] = True
-
-        self.db.child("lista").child(user["id"]).set(user)
+        self.getGroup(update).child("lista").child(user["id"]).set({
+                "id": user["id"],
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+                "timestamp": int(time.time()) - 3 * 60 * 60,
+                "goleiro": True
+            })
 
         return update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
 
@@ -271,10 +302,7 @@ class StackOvergol:
 
         convidado["id"] = user["id"] + convidado["timestamp"]
 
-        logger.info("convidado ojb")
-        logger.info(convidado)
-
-        self.db.child("lista").child(convidado["id"]).set(convidado)
+        self.getGroup(update).child("lista").child(convidado["id"]).set(convidado)
 
         msg = "{} {} adicionado à lista de presença.".format(convidado["first_name"], convidado["last_name"])
 
@@ -283,25 +311,31 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou(self, bot, update, user, *args, **kwargs):
-        if (self.db.child("lista").child(user["id"]).get().val()):
+        if (self.getGroup(update).child("lista").child(user["id"]).get().val()):
             return update.message.reply_text("Você já está na lista.")
 
-        self.db.child("farrapeiros").child(user["id"]).remove()
+        self.getGroup(update).child("farrapeiros").child(user["id"]).remove()
 
-        user["timestamp"] = int(time.time()) - 3 * 60 * 60
-
-        self.db.child("lista").child(user["id"]).set(user)
+        self.getGroup(update).child("lista").child(user["id"]).set({
+                "id": user["id"],
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+                "timestamp": int(time.time()) - 3 * 60 * 60
+            })
 
         return update.message.reply_text("{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"]))
 
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def naovou(self, bot, update, user, *args, **kwargs):
-        self.db.child("lista").child(user["id"]).remove()
+        self.getGroup(update).child("lista").child(user["id"]).remove()
 
-        user["timestamp"] = int(time.time()) - 3 * 60 * 60
-
-        self.db.child("farrapeiros").child(user["id"]).set(user)
+        self.getGroup(update).child("farrapeiros").child(user["id"]).set({
+                "id": user["id"],
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+                "timestamp": int(time.time()) - 3 * 60 * 60
+            })
 
         return update.message.reply_text("{} {} removido da lista de presença.".format(user["first_name"], user["last_name"]))
 
@@ -309,64 +343,51 @@ class StackOvergol:
     @Command(onde="GRUPO", quando=False, quem=False)
     def help(self, bot, update, user, *args, **kwargs):
         admin_commands = [
-            "Comandos de Bruno:",
-            "/comecar: Começa os registros e reseta todas as listas.",
-            "/terminar: Termina os registros e imprimi a lista final.",
-            "/vai: Coloca alguém na lista de presença.",
-            "/naovai: Remove alguém da lista de presença.",
+            "*Comandos de Administrador:*",
+            "`/abrir`: Abre os registros.",
+            "`/fechar`: Fecha os registros.",
+            "`/agendar_abrir HH:MMh DD/MM/YY`: Agenda o comando abrir para esta hora.",
+            "`/agendar_fechar HH:MMh DD/MM/YY`: Agenda o comando fechar para esta hora.",
+            "`/cancelar_abrir`: Cancela o agendamento de abrir.",
+            "`/cancelar_fechar`: Cancela o agendamento de fechar.",
+            "`/resetar`: Reseta algumas variáveis (listas, agendamentos, registros).",
+            "`/vai`: Coloca alguém na lista de presença.",
+            "`/naovai`: Remove alguém da lista de presença.",
+            "`/convidado Nome Sobrenome`: Adiciona Nome Sobrenome à lista de presença.",
+            "`/data String`: Configura a data do racha que será mostrada com a lista de presença."
         ]
 
         all_commands = [
-            "\nComandos:",
-            "/vou: Coloca você na lista de presença.",
-            "/vouagarrar: Coloca você na lista de goleiros.",
-            "/naovou: Remove você de qualquer lista de presença.",
-            "/listar: Imprimi a lista atual.",
+            "\n*Comandos:*",
+            "`/vou`: Coloca você na lista de presença.",
+            "`/vouagarrar`: Coloca você na lista de goleiros.",
+            "`/naovou`: Remove você de qualquer lista de presença.",
+            "`/listar`: Imprimi a lista atual.",
         ]
 
-        help_text = all_commands
+        help_text = []
 
-        return update.message.reply_text("\n".join(help_text))
+        if user["is_admin"]:
+            help_text += admin_commands
+
+        help_text += all_commands
+
+        return update.message.reply_text(
+                text="\n".join(help_text),
+                parse_mode=ParseMode.MARKDOWN
+            )
 
 
     @Command(onde="GRUPO", quando=False, quem=False)
     def listar(self, bot, update, user, *args, **kwargs):
-        return update.message.reply_text(self._get_lista_presenca())
+        return update.message.reply_text(self._get_lista_presenca(update))
 
 
-    @Command(onde="GRUPO", quando=False, quem=False)
+    @Command(onde=False, quando=False, quem=False)
     def uuid(self, bot, update, user, *args, **kwargs):
         text = "{} {}: {}".format(user["first_name"], user["last_name"], user["id"])
 
         return update.message.reply_text(text)
-
-
-    def _load_configs(self):
-        self.DEBUG = self.db.child("debug").get().val()
-
-        config = self.db.child("config").get().val()
-
-        if not config:
-            config = {
-                "debug": False,
-                "group_id": -1,
-                "max_goleiros": 2,
-                "max_jogadores": 24
-            }
-
-            self.db.child("config").set(config)
-
-        if "admins" not in config:
-            config["admins"] = {}
-
-        if "mensalistas" not in config:
-            config["mensalistas"] = {}
-
-        self.GROUP_ID = config["group_id"]
-        self.LISTA_ADMINS = [ int(key) for key in config["admins"].keys() ]
-        self.LISTA_MENSALISTAS = [ int(key) for key in config["mensalistas"].keys() ]
-        self.MAX_VAGAS_GOLEIROS = config["max_goleiros"]
-        self.MAX_VAGAS_JOGADORES = config["max_jogadores"]
 
 
     def _show_timestamp(self, user, with_time):
@@ -377,19 +398,18 @@ class StackOvergol:
         return ""
 
 
-    def _get_lista_presenca(self, with_time=False):
-        try:
-            lista = self.db.child("lista").get().val().values()
+    def _get_lista_presenca(self, update, with_time=False):
+        group = self.getGroup(update).get().val()
+        lista = []
+
+        if "lista" in group:
+            lista = group["lista"].values()
             lista = sorted(lista, key=itemgetter("timestamp"))
-        except AttributeError:
-            lista = []
 
-        self._load_configs()
+        hora_do_racha = ""
 
-        hora_do_racha = self.db.child("data_racha").get().val()
-
-        if not hora_do_racha:
-            hora_do_racha = ""
+        if "data_racha" in group:
+            hora_do_racha = group["data_racha"]
 
         # Adiciona o cabecalho
         linhas = [
@@ -401,12 +421,10 @@ class StackOvergol:
         # GOLEIROS
         todos_goleiros = []
 
-        logger.info(lista)
-
         lp_goleiros = [user for user in lista if "goleiro" in user and user["goleiro"]]
 
         for i, user in enumerate(lp_goleiros):
-            if len(todos_goleiros) == self.MAX_VAGAS_GOLEIROS:
+            if len(todos_goleiros) == group["max_goleiros"]:
                 todos_goleiros.append("Lista de Espera (Goleiro):")
 
             todos_goleiros.append("{} - {}{} {}".format(
@@ -417,6 +435,7 @@ class StackOvergol:
             ))
 
         linhas.append("Goleiros:")
+
         if len(todos_goleiros):
             linhas += todos_goleiros
         else:
@@ -426,7 +445,7 @@ class StackOvergol:
 
         # JOGADORES
         todos_jogadores = []
-        lp_mensalistas = [ user for user in lista if user["id"] in self.LISTA_MENSALISTAS and "goleiro" not in user ]
+        lp_mensalistas = [user for user in lista if str(user["id"]) in group["mensalistas"] and "goleiro" not in user]
 
         for i, user in enumerate(lp_mensalistas):
             todos_jogadores.append("{} - {}{} {} (M)".format(
@@ -436,10 +455,10 @@ class StackOvergol:
                 user["last_name"]
             ))
 
+        lp_convidados = [user for user in lista if str(user["id"]) not in group["mensalistas"] and "goleiro" not in user]
 
-        lp_convidados = [ user for user in lista if user["id"] not in self.LISTA_MENSALISTAS and "goleiro" not in user ]
         for i, user in enumerate(lp_convidados):
-            if len(todos_jogadores) == self.MAX_VAGAS_JOGADORES:
+            if len(todos_jogadores) == group["max_jogadores"]:
                 todos_jogadores.append("\nLista de Espera:")
 
             todos_jogadores.append("{} - {}{} {} (C)".format(
@@ -450,17 +469,17 @@ class StackOvergol:
             ))
 
         linhas.append("Jogadores:")
+
         if len(todos_jogadores):
             linhas += todos_jogadores
         else:
             linhas.append("----")
 
-        try:
-            lp_farrapeiros = self.db.child("farrapeiros").get().val().values()
-            lp_farrapeiros = sorted(lp_farrapeiros, key=itemgetter("timestamp"))
-        except AttributeError:
-            lp_farrapeiros = []
+        lp_farrapeiros = []
 
+        if "farrapeiros" in group:
+            lp_farrapeiros = group["farrapeiros"].values()
+            lp_farrapeiros = sorted(lp_farrapeiros, key=itemgetter("timestamp"))
 
         if lp_farrapeiros:
             linhas.append("=" * 15)
@@ -472,8 +491,18 @@ class StackOvergol:
                     self._show_timestamp(user, with_time),
                     user["first_name"],
                     user["last_name"],
-                    "M" if user["id"] in self.LISTA_MENSALISTAS else "C"
+                    "M" if str(user["id"]) in group["mensalistas"] else "C"
                 ))
 
         return "\n".join(linhas)
+
+
+    def isDebug(self):
+        return self.db.child("debug").get().val()
+
+
+    def getGroup(self, update):
+        group_id = update.message.chat.id
+
+        return self.db.child("groups").child(group_id)
 
