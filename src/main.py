@@ -48,6 +48,9 @@ def main():
     dp.add_handler(CommandHandler("resetar", STACK_OVERGOL_CORE.resetar))
     dp.add_handler(CommandHandler("data", STACK_OVERGOL_CORE.data, pass_args=True))
     dp.add_handler(CommandHandler("vai", STACK_OVERGOL_CORE.vai))
+    dp.add_handler(CommandHandler("adicionar_mensalista", STACK_OVERGOL_CORE.adicionar_mensalista))
+    dp.add_handler(CommandHandler("remover_mensalista", STACK_OVERGOL_CORE.remover_mensalista))
+    dp.add_handler(CommandHandler("mensalistas", STACK_OVERGOL_CORE.mensalistas))
     dp.add_handler(CommandHandler("naovai", STACK_OVERGOL_CORE.nao_vai))
 
     # ALL

@@ -21,6 +21,90 @@ class StackOvergol:
         self.fechar_job_instances = {}
 
 
+    @Command(onde="GRUPO", quando=False, quem=False)
+    def mensalistas(self, bot, update, user, *args, **kwargs):
+        # Só mostrar os usuários que ainda não estão na lista de presença e são mensalistas
+        try:
+            todos_usuarios = self.db.child("users").get().val().values()
+        except AttributeError:
+            return update.message.reply_text("Ninguém disponivel.")
+
+        lista_mensalistas = self.getGroup(update).child("mensalistas").get().val()
+        mensalistas = [user for user in todos_usuarios if str(user["id"]) in lista_mensalistas]
+
+        if len(mensalistas) == 0:
+            return update.message.reply_text("Nenhum mensalistas registrado.")
+
+        mensalistas_ordenados = sorted(mensalistas, key=itemgetter("first_name", "last_name"))
+
+        text = ""
+
+        for user in mensalistas_ordenados:
+            text += "- {} {}\n".format(user["first_name"], user["last_name"])
+
+        return update.message.reply_text(text)
+
+
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def remover_mensalista(self, bot, update, user, *args, **kwargs):
+        keyboard = []
+
+        # Só mostrar os usuários que ainda não estão na lista de presença e são mensalistas
+        try:
+            todos_usuarios = self.db.child("users").get().val().values()
+        except AttributeError:
+            return update.message.reply_text("Ninguém disponivel.")
+
+        lista_mensalistas = self.getGroup(update).child("mensalistas").get().val()
+        mensalistas = [user for user in todos_usuarios if str(user["id"]) in lista_mensalistas]
+
+        mensalistas_ordenados = sorted(mensalistas, key=itemgetter("first_name", "last_name"))
+
+        if mensalistas_ordenados:
+            for user in mensalistas_ordenados:
+                botao = InlineKeyboardButton("{} {}".format(user["first_name"], user["last_name"]), callback_data=str(user["id"]))
+                keyboard.append([botao])
+
+            botao_cancelar = InlineKeyboardButton("Cancelar", callback_data="-1")
+            keyboard.append([botao_cancelar])
+
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            update.message.reply_text("Remover mensalista:", reply_markup=reply_markup)
+
+        else:
+            return update.message.reply_text("Ninguém disponivel.")
+
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def adicionar_mensalista(self, bot, update, user, *args, **kwargs):
+        keyboard = []
+
+        # Só mostrar os usuários que ainda não estão na lista de presença e são mensalistas
+        try:
+            todos_usuarios = self.db.child("users").get().val().values()
+        except AttributeError:
+            return update.message.reply_text("Ninguém disponivel.")
+
+        lista_mensalistas = self.getGroup(update).child("mensalistas").get().val()
+        nao_mensalistas = [user for user in todos_usuarios if str(user["id"]) not in lista_mensalistas]
+
+        nao_mensalistas_ordenados = sorted(nao_mensalistas, key=itemgetter("first_name", "last_name"))
+
+        if nao_mensalistas_ordenados:
+            for user in nao_mensalistas_ordenados:
+                botao = InlineKeyboardButton("{} {}".format(user["first_name"], user["last_name"]), callback_data=str(user["id"]))
+                keyboard.append([botao])
+
+            botao_cancelar = InlineKeyboardButton("Cancelar", callback_data="-1")
+            keyboard.append([botao_cancelar])
+
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            update.message.reply_text("Adicionar mensalista:", reply_markup=reply_markup)
+
+        else:
+            return update.message.reply_text("Ninguém disponivel.")
+
+
+
     @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
     def vai(self, bot, update, user, *args, **kwargs):
         keyboard = []
@@ -112,6 +196,19 @@ class StackOvergol:
             self.getGroup(query).child("lista").child(user["id"]).set(user)
 
             message = "{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"])
+
+        elif text == "Remover mensalista:":
+            self.getGroup(query).child("mensalistas").child(user["id"]).remove()
+
+            message = "{} {} removido da lista de mensalistas.".format(user["first_name"], user["last_name"])
+
+        elif text == "Adicionar mensalista:":
+            nome = "{} {}".format(user["first_name"], user["last_name"])
+
+            self.getGroup(query).child("mensalistas").child(user["id"]).set(nome)
+
+            message = "{} adicionado à lista de mensalistas.".format(nome)
+
         else:
             self.getGroup(query).child("lista").child(user["id"]).remove()
 
