@@ -477,7 +477,12 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando=False, quem=False)
     def listar(self, bot, update, user, *args, **kwargs):
-        return update.message.reply_text(self._get_lista_presenca(update))
+        with_time = False
+
+        if len(kwargs["args"][0]):
+            with_time = kwargs["args"][0].lower() == "true"
+
+        return update.message.reply_text(self._get_lista_presenca(update, with_time))
 
 
     @Command(onde=False, quando=False, quem=False)

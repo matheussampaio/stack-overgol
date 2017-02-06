@@ -1,3 +1,4 @@
+import time
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,13 @@ class Command(object):
             # QUANDO: "ABERTO", "FECHADO", False
             if self.quando == "ABERTO" and not group_value["registros_abertos"]:
                 return update.message.reply_text("Esse comando não pode ser usado com os registros fechados.")
+
+            hora_de_abrir = group_value["data_racha"]
+            epoch_abrir = time.mktime(time.strptime(hora_de_abrir, "%H:%Mh %d/%m/%y"))
+
+            if self.quando == "ABERTO" and group_value["registros_abertos"] \
+                and int(update.message.date.strftime("%s")) < epoch_abrir:
+                return update.message.reply_text("Comando enviado antes de abrir.")
 
             if self.quando == "FECHADO" and group_value["registros_abertos"]:
                 return update.message.reply_text("Esse comando não pode ser usado com os registros abertos.")

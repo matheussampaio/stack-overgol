@@ -57,7 +57,7 @@ def main():
     dp.add_handler(CommandHandler("vou", STACK_OVERGOL_CORE.vou))
     dp.add_handler(CommandHandler("vouagarrar", STACK_OVERGOL_CORE.vou_agarrar))
     dp.add_handler(CommandHandler("naovou", STACK_OVERGOL_CORE.naovou))
-    dp.add_handler(CommandHandler("listar", STACK_OVERGOL_CORE.listar))
+    dp.add_handler(CommandHandler("listar", STACK_OVERGOL_CORE.listar, pass_args=True))
     dp.add_handler(CommandHandler("uuid", STACK_OVERGOL_CORE.uuid))
 
     # OTHERS
