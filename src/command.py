@@ -37,7 +37,7 @@ class Command(object):
             if self.quando == "ABERTO" and not group_value["registros_abertos"]:
                 return update.message.reply_text("Esse comando não pode ser usado com os registros fechados.")
 
-            hora_de_abrir = group_value["data_racha"]
+            hora_de_abrir = group_value["hora_abrir_registros"]
             epoch_abrir = time.mktime(time.strptime(hora_de_abrir, "%H:%Mh %d/%m/%y"))
 
             if self.quando == "ABERTO" and group_value["registros_abertos"] \
