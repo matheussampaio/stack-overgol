@@ -105,7 +105,7 @@ class StackOvergol:
 
 
 
-    @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def vai(self, bot, update, user, *args, **kwargs):
         keyboard = []
 
@@ -135,7 +135,7 @@ class StackOvergol:
             return update.message.reply_text("Ninguém disponivel.")
 
 
-    @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def nao_vai(self, bot, update, user, *args, **kwargs):
         keyboard = []
 
@@ -388,7 +388,7 @@ class StackOvergol:
         return update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
 
 
-    @Command(onde="GRUPO", quando="ABERTO", quem="ADMIN")
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def convidado(self, bot, update, user, *args, **kwargs):
         first_name = kwargs["args"][0]
         last_name = kwargs["args"][1]
