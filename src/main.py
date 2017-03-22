@@ -52,6 +52,7 @@ def main():
     dp.add_handler(CommandHandler("remover_mensalista", STACK_OVERGOL_CORE.remover_mensalista))
     dp.add_handler(CommandHandler("mensalistas", STACK_OVERGOL_CORE.mensalistas))
     dp.add_handler(CommandHandler("naovai", STACK_OVERGOL_CORE.nao_vai))
+    dp.add_handler(CommandHandler("times", STACK_OVERGOL_CORE.times))
 
     # ALL
     dp.add_handler(CommandHandler("vou", STACK_OVERGOL_CORE.vou))

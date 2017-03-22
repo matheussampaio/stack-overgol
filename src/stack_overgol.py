@@ -2,6 +2,8 @@
 
 import time
 import logging
+import random
+
 from operator import itemgetter
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
@@ -74,6 +76,7 @@ class StackOvergol:
         else:
             return update.message.reply_text("Ninguém disponivel.")
 
+
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def adicionar_mensalista(self, bot, update, user, *args, **kwargs):
         keyboard = []
@@ -102,7 +105,6 @@ class StackOvergol:
 
         else:
             return update.message.reply_text("Ninguém disponivel.")
-
 
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
@@ -390,6 +392,9 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def convidado(self, bot, update, user, *args, **kwargs):
+        if len(kwargs["args"]) != 2:
+            return update.message.reply_text("`/convidado <nome> <sobrenome>`")
+
         first_name = kwargs["args"][0]
         last_name = kwargs["args"][1]
 
@@ -410,17 +415,17 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou(self, bot, update, user, *args, **kwargs):
-        if (self.getGroup(update).child("lista").child(user["id"]).get().val()):
+        if self.getGroup(update).child("lista").child(user["id"]).get().val():
             return update.message.reply_text("Você já está na lista.")
 
         self.getGroup(update).child("farrapeiros").child(user["id"]).remove()
 
         self.getGroup(update).child("lista").child(user["id"]).set({
-                "id": user["id"],
-                "first_name": user["first_name"],
-                "last_name": user["last_name"],
-                "timestamp": int(update.message.date.strftime("%s")) - 3 * 60 * 60
-            })
+            "id": user["id"],
+            "first_name": user["first_name"],
+            "last_name": user["last_name"],
+            "timestamp": int(update.message.date.strftime("%s")) - 3 * 60 * 60
+        })
 
         return update.message.reply_text("{} {} adicionado à lista de presença.".format(user["first_name"], user["last_name"]))
 
@@ -430,13 +435,80 @@ class StackOvergol:
         self.getGroup(update).child("lista").child(user["id"]).remove()
 
         self.getGroup(update).child("farrapeiros").child(user["id"]).set({
-                "id": user["id"],
-                "first_name": user["first_name"],
-                "last_name": user["last_name"],
-                "timestamp": int(time.time()) - 3 * 60 * 60
-            })
+            "id": user["id"],
+            "first_name": user["first_name"],
+            "last_name": user["last_name"],
+            "timestamp": int(time.time()) - 3 * 60 * 60
+        })
 
-        return update.message.reply_text("{} {} removido da lista de presença.".format(user["first_name"], user["last_name"]))
+        output = "{} {} removido da lista de presença.".format(
+            user["first_name"],
+            user["last_name"]
+        )
+
+        return update.message.reply_text(output)
+
+
+    def get_weakest_team(self, team):
+        return min(team, key=lambda t: sum([p["stars"] for p in t]))
+
+    def divide_teams(self, players):
+        players = sorted(players, key=lambda p: p["stars"])
+
+        teams = [[], [], [], []]
+
+        while len(players):
+            self.get_weakest_team(teams).append(players.pop())
+
+        return teams
+
+
+    def print_teams(self, update, teams):
+        output = ["Ordem dos times: A x B, C, D\n"]
+
+        for letter, team in zip(["A", "B", "C", "D"], teams):
+            total = sum([p["stars"] for p in team])
+
+            output.append("Time {:<20} {:.2f} ({:.2f})".format(
+                letter,
+                total,
+                total / len(team)
+            ))
+
+            for i, player in enumerate(team):
+                output.append("{:>2} - {:<20} {:.2f}{}".format(
+                    i + 1,
+                    player["first_name"] + " " + player["last_name"],
+                    player["stars"],
+                    "*" if "fake_stars" in player else ""
+                ))
+
+            output.append("")
+
+        return update.message.reply_text("\n".join(output))
+
+
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def times(self, bot, update, user, *args, **kwargs):
+        try:
+            lista_presenca = self.getGroup(update).child("lista").get().val().values()
+        except AttributeError:
+            return update.message.reply_text("Lista de presença vazia.")
+
+        jogadores = []
+
+        for jogador in lista_presenca:
+            if "stars" not in jogador:
+                jogador["stars"] = 3.00
+                jogador["fake_stars"] = True
+
+            jogadores.append(jogador)
+
+        random.shuffle(jogadores)
+
+        teams = self.divide_teams(jogadores)
+
+        return self.print_teams(update, teams)
 
 
     @Command(onde="GRUPO", quando=False, quem=False)
@@ -609,4 +681,3 @@ class StackOvergol:
         group_id = update.message.chat.id
 
         return self.db.child("groups").child(group_id)
-
