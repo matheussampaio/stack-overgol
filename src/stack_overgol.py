@@ -452,6 +452,7 @@ class StackOvergol:
     def get_weakest_team(self, team):
         return min(team, key=lambda t: sum([p["stars"] for p in t]))
 
+
     def divide_teams(self, players):
         players = sorted(players, key=lambda p: p["stars"])
 

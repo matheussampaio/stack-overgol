@@ -17,6 +17,11 @@ class Command(object):
             _self.db.child("users").child(user["id"]).set(user)
 
             group_id = update.message.chat.id
+
+            _self.db.child("groups").child(group_id) \
+                    .child("users").child(user["id"]) \
+                    .update(user)
+
             group_value = _self.db.child("groups").child(group_id).get().val()
 
             user["is_admin"] = bool(str(user["id"]) in group_value["admins"])
