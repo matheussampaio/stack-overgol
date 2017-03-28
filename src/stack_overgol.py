@@ -465,7 +465,7 @@ class StackOvergol:
 
 
     def print_teams(self, update, teams):
-        output = ["Ordem dos times: A x B, C, D\n"]
+        output = ["```text", "Ordem dos times: A x B, C, D\n"]
 
         for letter, team in zip(["A", "B", "C", "D"], teams):
             total = sum([p["stars"] for p in team])
@@ -486,7 +486,12 @@ class StackOvergol:
 
             output.append("")
 
-        return update.message.reply_text("\n".join(output))
+        output.append("```")
+
+        return update.message.reply_text(
+                    text="\n".join(output),
+                    parse_mode=ParseMode.MARKDOWN
+                )
 
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
