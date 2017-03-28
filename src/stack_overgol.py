@@ -492,7 +492,7 @@ class StackOvergol:
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def times(self, bot, update, user, *args, **kwargs):
         try:
-            lista_presenca = self.getGroup(update).child("lista").get().val().values()
+            lista_presenca = [j for j in self.getGroup(update).child("lista").get().val().values() if "goleiro" not in j]
         except AttributeError:
             return update.message.reply_text("Lista de presença vazia.")
 
