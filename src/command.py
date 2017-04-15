@@ -14,15 +14,13 @@ class Command(object):
         def wrapper_f(_self, bot, update, *args, **kwargs):
             user = update.message.from_user.to_dict()
 
-            _self.db.child("users").child(user["id"]).set(user)
+            del user["type"]
 
             group_id = update.message.chat.id
 
-            _self.db.child("groups").child(group_id) \
-                    .child("users").child(user["id"]) \
-                    .update(user)
-
             group_value = _self.db.child("groups").child(group_id).get().val()
+
+            _self.db.child("users").child(user["id"]).update(user)
 
             user["is_admin"] = bool(str(user["id"]) in group_value["admins"])
             user["is_mensalista"] = bool(str(user["id"]) in group_value["mensalistas"])

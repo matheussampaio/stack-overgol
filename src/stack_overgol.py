@@ -260,6 +260,14 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def agendar_abrir(self, bot, update, user, *args, **kwargs):
+        print(kwargs)
+
+        if len(kwargs["args"]) != 2:
+            return update.message.reply_text(
+                    text="Comando incorreto. `/agendar_abrir 20:00h 01/01/17`",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+
         now = time.time()
         chat_id = update.message.chat_id
 
@@ -390,7 +398,7 @@ class StackOvergol:
         return update.message.reply_text("{} {} adicionado à lista de goleiros.".format(user["first_name"], user["last_name"]))
 
 
-    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    @Command(onde="GRUPO", quando=False, quem=False)
     def convidado(self, bot, update, user, *args, **kwargs):
         if len(kwargs["args"]) != 2:
             return update.message.reply_text("`/convidado <nome> <sobrenome>`")
@@ -503,12 +511,32 @@ class StackOvergol:
 
         jogadores = []
 
+        group_id = update.message.chat.id
+
         for jogador in lista_presenca:
-            if "stars" not in jogador:
+            jogador_id = jogador["id"]
+
+            stars = self.db.child("users/{}/groups/{}/stars".format(jogador_id, group_id)).get().val()
+
+            if stars:
+                jogador["stars"] = stars
+            else:
                 jogador["stars"] = 3.00
                 jogador["fake_stars"] = True
 
+            jogador["stars"] = jogador["stars"] - (random.randrange(-25, 25) / 100)
+
             jogadores.append(jogador)
+
+        for i in range(len(jogadores), 24):
+            fake_jogador = {
+                "first_name": "Jogador",
+                "last_name": str(i + 1),
+                "stars": 3.00,
+                "fake_stars": True
+            }
+
+            jogadores.append(fake_jogador)
 
         random.shuffle(jogadores)
 
@@ -530,12 +558,12 @@ class StackOvergol:
             "`/resetar`: Reseta algumas variáveis (listas, agendamentos, registros).",
             "`/vai`: Coloca alguém na lista de presença.",
             "`/naovai`: Remove alguém da lista de presença.",
-            "`/convidado Nome Sobrenome`: Adiciona Nome Sobrenome à lista de presença.",
             "`/data String`: Configura a data do racha que será mostrada com a lista de presença."
         ]
 
         all_commands = [
             "\n*Comandos:*",
+            "`/convidado Nome Sobrenome`: Adiciona Nome Sobrenome à lista de presença.",
             "`/vou`: Coloca você na lista de presença.",
             "`/vouagarrar`: Coloca você na lista de goleiros.",
             "`/naovou`: Remove você de qualquer lista de presença.",
@@ -571,6 +599,21 @@ class StackOvergol:
 
         return update.message.reply_text(text)
 
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def fazteunome(self, bot, update, user, *args, **kwargs):
+        if len(kwargs["args"]) != 6:
+            return update.message.reply_text(
+                    text="Comando incorreto. `/fazteunome 20:00h 01/01/17 15:00h 02/01/17 20:00h 02/01/17`",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+
+        self.resetar(bot, update, user, args, kwargs)
+
+        self.agendar_abrir(bot, update, user, args, args=kwargs["args"][0:2], job_queue=kwargs["job_queue"])
+
+        self.agendar_fechar(bot, update, user, args, args=kwargs["args"][2:4], job_queue=kwargs["job_queue"])
+
+        self.data(bot, update, user, args, args=kwargs["args"][4:6])
 
     def _show_timestamp(self, user, with_time):
         if with_time:

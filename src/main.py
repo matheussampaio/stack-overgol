@@ -53,6 +53,7 @@ def main():
     dp.add_handler(CommandHandler("mensalistas", STACK_OVERGOL_CORE.mensalistas))
     dp.add_handler(CommandHandler("naovai", STACK_OVERGOL_CORE.nao_vai))
     dp.add_handler(CommandHandler("times", STACK_OVERGOL_CORE.times))
+    dp.add_handler(CommandHandler("fazteunome", STACK_OVERGOL_CORE.fazteunome, pass_args=True, pass_job_queue=True))
 
     # ALL
     dp.add_handler(CommandHandler("vou", STACK_OVERGOL_CORE.vou))
