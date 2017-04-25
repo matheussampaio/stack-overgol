@@ -506,6 +506,8 @@ class StackOvergol:
     def times(self, bot, update, user, *args, **kwargs):
         try:
             lista_presenca = [j for j in self.getGroup(update).child("lista").get().val().values() if "goleiro" not in j]
+
+            lista_presenca = sorted(lista_presenca, key=itemgetter("timestamp"))[:24]
         except AttributeError:
             return update.message.reply_text("Lista de presença vazia.")
 
