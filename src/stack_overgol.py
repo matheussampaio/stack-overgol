@@ -504,18 +504,28 @@ class StackOvergol:
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def times(self, bot, update, user, *args, **kwargs):
+        bot.sendMessage(update.message.chat_id, text="Calculando os times...")
+
+        mensalistas = self.getGroup(update).child("mensalistas").get().val()
+
         try:
             lista_presenca = [j for j in self.getGroup(update).child("lista").get().val().values() if "goleiro" not in j]
 
-            lista_presenca = sorted(lista_presenca, key=itemgetter("timestamp"))[:24]
         except AttributeError:
             return update.message.reply_text("Lista de presença vazia.")
+
+        lista_mensalistas = [j for j in lista_presenca if str(j["id"]) in mensalistas]
+        lista_convidados = [j for j in lista_presenca if str(j["id"]) not in mensalistas]
+        lista_convidados = sorted(lista_convidados, key=itemgetter("timestamp"))
+
+        missing_players = 24 - len(lista_mensalistas)
+        lista = lista_mensalistas + lista_convidados[:missing_players]
 
         jogadores = []
 
         group_id = update.message.chat.id
 
-        for jogador in lista_presenca:
+        for jogador in lista:
             jogador_id = jogador["id"]
 
             stars = self.db.child("users/{}/groups/{}/stars".format(jogador_id, group_id)).get().val()
@@ -601,6 +611,7 @@ class StackOvergol:
 
         return update.message.reply_text(text)
 
+
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def fazteunome(self, bot, update, user, *args, **kwargs):
         if len(kwargs["args"]) != 6:
@@ -616,6 +627,7 @@ class StackOvergol:
         self.agendar_fechar(bot, update, user, args, args=kwargs["args"][2:4], job_queue=kwargs["job_queue"])
 
         self.data(bot, update, user, args, args=kwargs["args"][4:6])
+
 
     def _show_timestamp(self, user, with_time):
         if with_time:
