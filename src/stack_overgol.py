@@ -473,9 +473,9 @@ class StackOvergol:
 
 
     def print_teams(self, update, teams):
-        output = ["```text", "Ordem dos times: A x B, C, D\n"]
+        output = ["```text", "Ordem dos times: Azul x Vermelho, Verde, Branco\n"]
 
-        for letter, team in zip(["A", "B", "C", "D"], teams):
+        for letter, team in zip(["Azul", "Vermelho", "Verde", "Branco"], teams):
             total = sum([p["stars"] for p in team])
 
             output.append("Time {:<20} {:.2f} ({:.2f})".format(
