@@ -1,11 +1,17 @@
+# Virtualenv
 venv/
 
+# Python cache
+**/__pycache__/
+
+# OSX trahs
 .DS_Store
 
-*.pyc
-*.swp
-*.json
-*.csv
+# Firebase configurations
+firebase.json
 
-# Don't commit your configs!
-src/configs.py
+# Others
+*.pyc
+
+# Settings
+configs.yml
