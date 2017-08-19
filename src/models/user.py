@@ -29,6 +29,10 @@ class User:
     def rating(self):
         return self._rating
 
+    @rating.setter
+    def rating(self, value):
+        self._rating = value
+
     @property
     def is_admin(self):
         return self._is_admin
@@ -46,6 +50,9 @@ class User:
             "is_admin": self.is_admin,
             "is_subscriber": self.is_subscriber
         }
+
+    def __lt__(self, other):
+        return self.rating < other.rating
 
     def __str__(self):
         return "{} {}".format(self.first_name, self.last_name)

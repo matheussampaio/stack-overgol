@@ -36,22 +36,23 @@ class ListItem:
         }
 
     def __lt__(self, other):
-        # if self.is_goalkeeper != other.is_goalkeeper:
-        #     return not self.is_goalkeeper
+        if self.is_goalkeeper != other.is_goalkeeper:
+            return not self.is_goalkeeper
 
         if self.is_guest != other.is_guest:
-            return self.is_guest
+            return not self.is_guest
 
-        return self.timestamp > other.timestamp
+        return self.timestamp < other.timestamp
 
     def __str__(self):
-        if self.is_guest:
-            return "{} (C)".format(str(self.user))
+        if self.user.is_subscriber:
+            return "{} (M)".format(str(self.user))
 
-        return str(self.user)
+        return "{} (C)".format(str(self.user))
 
     def __repr__(self):
-        return repr(self.user)
+        return "{} is_goalkeeper={} is_guest={} timestamp={}".format(self.__class__, self.is_goalkeeper, self.is_guest,
+                self.timestamp)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):

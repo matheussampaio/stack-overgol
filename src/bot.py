@@ -1,36 +1,34 @@
 import time
 import logging
 
-# from telegram.ext import Job
+from telegram.ext import Job
+from telegram import ParseMode
 
 from models.user import User
-from models.group import Group
+from models.group import group
 
-from decorators.command import Command
+from utils import configs
 from database.firebase import database
+from decorators.command import Command
 
 logger = logging.getLogger(__name__)
 
 class Bot:
     def __init__(self, job_queue):
-        self.job_queue = job_queue
-        self.group = Group()
-
-        self.schedule_open_check_in()
-        self.schedule_close_check_in()
+        group.init(job_queue)
 
     @Command(onde=False, quando="ABERTO", quem=False)
     def vou(self, bot, update, user):
-        if user not in self.group:
-            self.group.add(user)
+        if user not in group:
+            group.add(user)
             update.message.reply_text("{} adicionado à lista de presença.".format(user))
         else:
             update.message.reply_text("{} já está na lista de presença.".format(user))
 
     @Command(onde=False, quando="ABERTO", quem=False)
     def vouagarrar(self, bot, update, user):
-        if user not in self.group:
-            self.group.add(user, is_goalkeeper=True)
+        if user not in group:
+            group.add(user, is_goalkeeper=True)
             update.message.reply_text("{} adicionado à lista de goleiros.".format(user))
         else:
             update.message.reply_text("{} já está na lista de presença.".format(user))
@@ -47,44 +45,40 @@ class Bot:
 
         guest = User(guest_id, first_name, last_name, rating)
 
-        self.group.add(guest, is_guest=True)
+        group.add(guest, is_guest=True)
         update.message.reply_text("{} adicionado à lista de convidados.".format(guest))
 
     @Command(onde=False, quando="ABERTO", quem=False)
     def naovou(self, bot, update, user):
-        if user in self.group:
-            self.group.remove(user)
+        if user in group:
+            group.remove(user)
             update.message.reply_text("{} removido da lista de presença.".format(user))
         else:
             update.message.reply_text("{} não está na lista de presença.".format(user))
 
     @Command(onde=False, quando=False, quem=False)
     def listar(self, bot, update, user):
-        return bot.sendMessage(update.message.chat_id, str(self.group))
+        return bot.sendMessage(update.message.chat_id, str(group))
 
     @Command(onde=False, quando="FECHADO", quem=False)
     def abrir(self, bot, update, user):
-        self.group.open_check_in()
+        group.open_check_in()
         update.message.reply_text("Registros abertos!")
 
     @Command(onde=False, quando="ABERTO", quem=False)
     def fechar(self, bot, update, user):
-        self.group.close_check_in()
+        group.close_check_in()
         update.message.reply_text("Registros fechados!")
 
     @Command(onde=False, quando=False, quem=False)
     def resetar(self, bot, update, user):
-        self.group.reset()
+        group.reset()
         update.message.reply_text("Registros resetados!")
 
-    def schedule_open_check_in(self):
-        pass
-        # def callback_open_check_in(bot, job):
-        #     bot.send_message(chat_id="227260861", text='One message every minute')
-        #
-        # job_minute = Job(callback_open_check_in, 60.0)
-        #
-        # self.job_queue.put(job_minute, next_t=0.0)
+    @Command(onde=False, quando=False, quem=False)
+    def times(self, bot, update, user):
+        bot.send_message(chat_id=update.message.chat_id, text="Calculado times...")
 
-    def schedule_close_check_in(self):
-        pass
+        teams_str = group.calculate_teams()
+
+        bot.send_message(chat_id=update.message.chat_id, text=teams_str, parse_mode=ParseMode.MARKDOWN)

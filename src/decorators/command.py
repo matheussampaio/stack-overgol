@@ -2,11 +2,9 @@ import time
 import logging
 
 from utils import configs
-from models.group import Group
+from models.group import group
 
 logger = logging.getLogger(__name__)
-
-group = Group()
 
 class Command(object):
     def __init__(self, onde="GRUPO", quando="ABERTO", quem=False):

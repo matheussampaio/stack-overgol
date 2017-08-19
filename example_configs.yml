@@ -20,6 +20,8 @@ FIREBASE:
 # Columna "TZ": https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 TIMEZONE: "America/Recife"
 
+SYNC_INTERVAL: 300
+
 ################################################
 ############# Configurações do Racha ###########
 ################################################

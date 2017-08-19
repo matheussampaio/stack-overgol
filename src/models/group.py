@@ -4,43 +4,53 @@ import logging
 from operator import itemgetter
 
 from utils import configs
+
 from models.user import User
+from utils.teams import Teams
 from models.listitem import ListItem
 from database.firebase import database
-from metaclasses.singleton import Singleton
 
 logger = logging.getLogger(__name__)
 
-class Group(metaclass=Singleton):
+class Group():
     def __init__(self):
+        self.job_queue = None
         self.list = []
         self.all_users = []
         self.check_in_open = False
+        self.should_sync = False
 
+        self.teams = Teams()
         self.load()
+
+    def init(self, job_queue):
+        self.job_queue = job_queue
+        self.shedule_save()
+        self.schedule_open_check_in()
+        self.schedule_close_check_in()
 
     def open_check_in(self):
         self.check_in_open = True
-        self.save()
+        self.should_sync = True
 
     def close_check_in(self):
         self.check_in_open = False
-        self.save()
+        self.should_sync = True
 
     def add(self, player, is_goalkeeper=False, is_guest=False):
         if not self.__contains__(player):
             self.list.append(ListItem(player, is_goalkeeper, is_guest))
-            self.list.sort(reverse=True) #key=itemgetter("is_goalkeeper", "is_guest", "timestamp"))
-            self.save()
+            self.list.sort()
+            self.should_sync = True
 
     def remove(self, player):
         if self.__contains__(player):
             self.list.remove(ListItem(player))
-            self.save()
+            self.should_sync = True
 
     def reset(self):
         self.list = []
-        self.save()
+        self.should_sync = True
 
     def is_check_in_open(self):
         return self.check_in_open
@@ -56,16 +66,28 @@ class Group(metaclass=Singleton):
         user = User(**data)
 
         self.all_users.append(user)
+        self.should_sync = True
 
         return user
 
     def get_user_or_create(self, data):
         return self.get_user(data) or self.create_user(data)
 
+    def calculate_teams(self):
+        players = [item.user for item in self.list if not item.is_goalkeeper]
+
+        self.teams.calculate_teams(players)
+        self.should_sync = True
+
+        return str(self.teams)
+
     def save(self):
+        database.child("teams").set(self.teams.serialize())
         database.child("check_in_open").set(self.check_in_open)
         database.child("list").set({ item.user.id: item.serialize() for item in self.list })
         database.child("users").set({ user.id: user.serialize() for user in self.all_users })
+
+        self.should_sync = False
 
     def load(self):
         self.check_in_open = database.child("check_in_open").get().val()
@@ -86,6 +108,8 @@ class Group(metaclass=Singleton):
 
                 self.list.append(listitem)
 
+            self.list.sort()
+
         except Exception as e:
             logger.error(e)
 
@@ -94,14 +118,62 @@ class Group(metaclass=Singleton):
         except Exception as e:
             logger.error(e)
 
+    def get_players(self, func=None):
+        if func:
+            return [item.user for item in self.list if func(item)]
+
+        return self.list
+
+    def shedule_save(self):
+        def on_save_time(bot, job):
+            if self.should_sync:
+                self.save()
+                logger.info("sync")
+
+        if self.job_queue:
+            self.job_queue.run_repeating(on_save_time, configs.get("SYNC_INTERVAL"))
+
+    def schedule_open_check_in(self):
+        pass
+        # def callback_open_check_in(bot, job):
+        #     bot.send_message(chat_id="227260861", text='One message every minute')
+        #
+        # job_minute = Job(callback_open_check_in, 60.0)
+        #
+        # self.job_queue.put(job_minute, next_t=0.0)
+
+    def schedule_close_check_in(self):
+        pass
+
     def __str__(self):
         output = [
             "Lista de Presença",
             "=============",
         ]
 
-        for i, item in enumerate(self.list):
-            output.append("{} - {}".format(i + 1, item))
+        goalkeepers = [item for item in self.list if item.is_goalkeeper]
+
+        if len(goalkeepers):
+            output.append("Goleiros:")
+
+            for i, item in enumerate(goalkeepers):
+                if i == configs.get("RACHA.MAX_TEAMS"):
+                    output.append("\nLista de Espera (Goleiro):")
+
+                output.append("{} - {}".format(i + 1, item))
+
+            output.append('')
+
+        players = [item for item in self.list if not item.is_goalkeeper]
+
+        if len(players):
+            output.append("Jogadores:")
+
+            for i, item in enumerate(players):
+                if i == configs.get("RACHA.MAX_TEAMS") * configs.get("RACHA.MAX_NUMBER_PLAYERS_TEAM"):
+                    output.append("Lista de Espera (Jogador):")
+
+                output.append("{} - {}".format(i + 1, item))
 
         return "\n".join(output)
 
@@ -114,3 +186,5 @@ class Group(metaclass=Singleton):
                 return True
 
         return False
+
+group = Group()
