@@ -26,8 +26,6 @@ class Group():
     def init(self, job_queue):
         self.job_queue = job_queue
         self.shedule_save()
-        self.schedule_open_check_in()
-        self.schedule_close_check_in()
 
     def open_check_in(self):
         self.check_in_open = True
@@ -132,18 +130,6 @@ class Group():
 
         if self.job_queue:
             self.job_queue.run_repeating(on_save_time, configs.get("SYNC_INTERVAL"))
-
-    def schedule_open_check_in(self):
-        pass
-        # def callback_open_check_in(bot, job):
-        #     bot.send_message(chat_id="227260861", text='One message every minute')
-        #
-        # job_minute = Job(callback_open_check_in, 60.0)
-        #
-        # self.job_queue.put(job_minute, next_t=0.0)
-
-    def schedule_close_check_in(self):
-        pass
 
     def __str__(self):
         output = [

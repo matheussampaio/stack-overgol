@@ -13,9 +13,53 @@ from decorators.command import Command
 
 logger = logging.getLogger(__name__)
 
+from datetime import datetime, timedelta
+
+def get_next_datetime(date):
+    day, time = date.split(" ")
+    hour, minute = map(int, time.split(":"))
+
+    temp = datetime.now()
+
+    if temp.hour >= hour and temp.minute >= minute:
+      temp += timedelta(days=1)
+
+    temp = temp.replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+    while temp.strftime("%A").lower() != day.lower():
+        temp += timedelta(days=1)
+
+    return temp
+
+
+
 class Bot:
     def __init__(self, job_queue):
-        group.init(job_queue)
+        self.job_queue = job_queue
+
+        group.init(self.job_queue)
+
+        self.schedule_open_check_in()
+        self.schedule_close_check_in()
+
+    def schedule_open_check_in(self):
+        def open_check_in_callback(bot, job):
+            group.open_check_in()
+            bot.send_message(chat_id=configs.get("RACHA.GROUP_ID"), text="Registros abertos.")
+
+        first_date = get_next_datetime(configs.get("RACHA.OPEN_CHECK_IN_DATE"))
+
+        self.job_queue.run_repeating(open_check_in_callback, timedelta(days=7), first=first_date)
+
+    def schedule_close_check_in(self):
+        def close_check_in_callback(bot, job):
+            group.close_check_in()
+            bot.send_message(chat_id=configs.get("RACHA.GROUP_ID"), text="Registros fechados.")
+
+        first_date = get_next_datetime(configs.get("RACHA.CLOSE_CHECK_IN_DATE"))
+
+        self.job_queue.run_repeating(close_check_in_callback, timedelta(days=7), first=first_date)
+
 
     @Command(onde=False, quando="ABERTO", quem=False)
     def vou(self, bot, update, user):

@@ -13,7 +13,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 # Enable logging
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    level=logging.INFO if configs.get("DEBUG") else logging.INFO)
+                    level=logging.DEBUG if configs.get("DEBUG") else logging.INFO)
 
 logger = logging.getLogger(__name__)
 
