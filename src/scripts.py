@@ -1,14 +1,14 @@
 import csv
-import configs
 import pyrebase
 
 from operator import itemgetter
 
+from utils import configs
+from database.firebase import database
+
 STACK_OVERGOL_ID = '-1001071336991'
 RATINGS_FILE_NAME = 'ratings.csv'
 DEBUG = False
-
-db = pyrebase.initialize_app(configs.FIREBASE).database()
 
 def main():
     with open(RATINGS_FILE_NAME, newline='') as ratingsfile:
@@ -43,8 +43,6 @@ def main():
                 db.child(path).set(stars)
                 print("Atualizado.")
 
-
-
 def get_missing_ratings_from_current_list(group_id, show_id=False):
     lista = db.child("groups/{}/lista".format(group_id)).get().val().values()
 
@@ -67,28 +65,36 @@ def get_missing_ratings_from_current_list(group_id, show_id=False):
 
             print(output)
 
+def update_users_object():
+    subscribers = database.child("groups/{}/mensalistas".format(STACK_OVERGOL_ID)).get().val()
 
-# Firebase Admin: Search User
-# firebase().database().ref('/users').once('value', (snapshot) => {
-#     let result = '';
-#     const search = 'lindemberg'.toLowerCase();
-#
-#     const users = snapshot.val();
-#
-#     for (let key in users) {
-#         const user = users[key];
-#
-#         const nome = `${user.first_name} ${user.last_name}`;
-#
-#         if (nome.toLowerCase().indexOf(search) !== -1) {
-#             result += `${nome.toUpperCase()}\t\t\t${user.id}\n`;
-#         }
-#     }
-#
-#     console.log(result);
-# });
+    users = database.child("users").get().val().values()
+
+    new_users_format = {}
+
+    for user in users:
+        try:
+            rating = user["groups"][STACK_OVERGOL_ID]["stars"]
+        except:
+            rating = 3.0
+
+        new_user = {
+            "first_name": user["first_name"],
+            "id": user["id"],
+            "is_admin": False,
+            "is_subscriber": str(user["id"]) in subscribers,
+            "last_name": user["last_name"],
+            "rating": rating,
+            "strikes": 0
+        }
+
+        new_users_format[new_user["id"]] = new_user
+
+    database.child("refactor/users").set(new_users_format)
 
 if __name__ == "__main__":
-    get_missing_ratings_from_current_list(STACK_OVERGOL_ID)
+    # get_missing_ratings_from_current_list(STACK_OVERGOL_ID)
 
     # main()
+
+    update_users_object()
