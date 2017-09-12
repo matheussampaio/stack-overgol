@@ -107,26 +107,25 @@ class Teams:
         colors = list(self.teams.keys())
 
         if len(colors) == 2:
-            output.append("Ordem dos times: {} x {}\n".format( \
+            output.append("Ordem dos jogos:\n 1. {} x {}".format( \
                 colors[0], colors[1]))
         elif len(colors) == 3:
-            output.append("Ordem dos times: {} x {}, {}\n".format( \
+            output.append("Ordem dos jogos:\n 1. {} x {}\n 2. {}\n".format( \
                 colors[0], colors[1], colors[2]))
         else:
-            output.append("Ordem dos times: {} x {}, {}, {}\n".format( \
+            output.append("Ordem dos jogos:\n 1. {} x {}\n 2. {}\n 3. {}\n".format( \
                 colors[0], colors[1], colors[2], colors[3]))
 
         for color, team in self.teams.items():
-            total = sum([player.rating for player in team])
-
-            output.append("Time {:<20} {:.2f} ({:.2f})".format(
-                color,
-                total,
-                total / len(team)
-            ))
+            output.append("Time {}:".format(color))
 
             for i, player in enumerate(team):
-                output.append("{:>2} - {!s:<20} {:.2f}".format(i + 1, player, player.rating))
+                name = str(player).strip()
+
+                if len(name) > 15:
+                    name = name[:12] + "..."
+
+                output.append(" - {!s:<15} ({:.1f})".format(name, player.rating))
 
             output.append("")
 

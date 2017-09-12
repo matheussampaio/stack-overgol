@@ -38,11 +38,8 @@ def main():
     dp.add_handler(CommandHandler("abrir", STACK_OVERGOL_CORE.abrir))
     dp.add_handler(CommandHandler("fechar", STACK_OVERGOL_CORE.fechar))
     dp.add_handler(CommandHandler("resetar", STACK_OVERGOL_CORE.resetar))
-    # dp.add_handler(CommandHandler("vai", STACK_OVERGOL_CORE.vai))
-    # dp.add_handler(CommandHandler("adicionar_mensalista", STACK_OVERGOL_CORE.adicionar_mensalista))
-    # dp.add_handler(CommandHandler("remover_mensalista", STACK_OVERGOL_CORE.remover_mensalista))
-    # dp.add_handler(CommandHandler("mensalistas", STACK_OVERGOL_CORE.mensalistas))
-    # dp.add_handler(CommandHandler("naovai", STACK_OVERGOL_CORE.nao_vai))
+    dp.add_handler(CommandHandler("save", STACK_OVERGOL_CORE.save))
+    dp.add_handler(CommandHandler("load", STACK_OVERGOL_CORE.load))
     dp.add_handler(CommandHandler("times", STACK_OVERGOL_CORE.times))
 
     # ALL
@@ -50,9 +47,6 @@ def main():
     dp.add_handler(CommandHandler("vouagarrar", STACK_OVERGOL_CORE.vouagarrar))
     dp.add_handler(CommandHandler("naovou", STACK_OVERGOL_CORE.naovou))
     dp.add_handler(CommandHandler("listar", STACK_OVERGOL_CORE.listar))
-
-    # OTHERS
-    # dp.add_handler(CallbackQueryHandler(STACK_OVERGOL_CORE.vai_nao_vai_callback))
 
     # log all errors
     dp.add_error_handler(error)

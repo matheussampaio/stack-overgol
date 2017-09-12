@@ -1,5 +1,7 @@
 import time
+from functools import total_ordering
 
+@total_ordering
 class ListItem:
     def __init__(self, user, is_goalkeeper=False, is_guest=False, timestamp=False):
         self._user = user
@@ -37,10 +39,10 @@ class ListItem:
 
     def __lt__(self, other):
         if self.is_goalkeeper != other.is_goalkeeper:
-            return not self.is_goalkeeper
+            return self.is_goalkeeper
 
-        if self.is_guest != other.is_guest:
-            return not self.is_guest
+        if self.user.is_subscriber != other.user.is_subscriber:
+            return self.user.is_subscriber
 
         return self.timestamp < other.timestamp
 
@@ -53,9 +55,3 @@ class ListItem:
     def __repr__(self):
         return "{} is_goalkeeper={} is_guest={} timestamp={}".format(self.__class__, self.is_goalkeeper, self.is_guest,
                 self.timestamp)
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.user == other.user
-
-        return self.user == other

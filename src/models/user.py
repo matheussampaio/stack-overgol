@@ -51,9 +51,6 @@ class User:
             "is_subscriber": self.is_subscriber
         }
 
-    def __lt__(self, other):
-        return self.rating < other.rating
-
     def __str__(self):
         return "{} {}".format(self.first_name, self.last_name)
 

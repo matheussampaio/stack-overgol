@@ -61,7 +61,7 @@ class Bot:
         self.job_queue.run_repeating(close_check_in_callback, timedelta(days=7), first=first_date)
 
 
-    @Command(onde=False, quando="ABERTO", quem=False)
+    @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou(self, bot, update, user):
         if user not in group:
             group.add(user)
@@ -69,7 +69,7 @@ class Bot:
         else:
             update.message.reply_text("{} já está na lista de presença.".format(user))
 
-    @Command(onde=False, quando="ABERTO", quem=False)
+    @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vouagarrar(self, bot, update, user):
         if user not in group:
             group.add(user, is_goalkeeper=True)
@@ -77,7 +77,7 @@ class Bot:
         else:
             update.message.reply_text("{} já está na lista de presença.".format(user))
 
-    @Command(onde=False, quando="ABERTO", quem=False)
+    @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def convidado(self, bot, update, user, **kwargs):
         if len(kwargs["args"]) != 3:
             return update.message.reply_text("`/convidado <nome> <sobrenome> <rating>`")
@@ -92,7 +92,7 @@ class Bot:
         group.add(guest, is_guest=True)
         update.message.reply_text("{} adicionado à lista de convidados.".format(guest))
 
-    @Command(onde=False, quando="ABERTO", quem=False)
+    @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def naovou(self, bot, update, user):
         if user in group:
             group.remove(user)
@@ -104,25 +104,35 @@ class Bot:
     def listar(self, bot, update, user):
         return bot.sendMessage(update.message.chat_id, str(group))
 
-    @Command(onde=False, quando="FECHADO", quem=False)
+    @Command(onde=False, quando="FECHADO", quem="ADMIN")
     def abrir(self, bot, update, user):
         group.open_check_in()
         update.message.reply_text("Registros abertos!")
 
-    @Command(onde=False, quando="ABERTO", quem=False)
+    @Command(onde=False, quando="ABERTO", quem="ADMIN")
     def fechar(self, bot, update, user):
         group.close_check_in()
         update.message.reply_text("Registros fechados!")
 
-    @Command(onde=False, quando=False, quem=False)
+    @Command(onde=False, quando=False, quem="ADMIN")
     def resetar(self, bot, update, user):
         group.reset()
         update.message.reply_text("Registros resetados!")
 
-    @Command(onde=False, quando=False, quem=False)
+    @Command(onde=False, quando=False, quem="ADMIN")
     def times(self, bot, update, user):
-        bot.send_message(chat_id=update.message.chat_id, text="Calculado times...")
-
         teams_str = group.calculate_teams()
 
         bot.send_message(chat_id=update.message.chat_id, text=teams_str, parse_mode=ParseMode.MARKDOWN)
+
+    @Command(onde=False, quando=False, quem="ADMIN")
+    def load(self, bot, update, user):
+        update.message.reply_text("Loading...")
+        group.load()
+
+    @Command(onde=False, quando=False, quem="ADMIN")
+    def save(self, bot, update, user):
+        update.message.reply_text("Saving...")
+        group.save()
+
+

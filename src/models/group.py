@@ -111,6 +111,8 @@ class Group():
         except Exception as e:
             logger.error(e)
 
+        # TODO: load teams
+
         try:
             self.all_users = [User(**user.val()) for user in database.child("users").get().each()]
         except Exception as e:
@@ -148,7 +150,7 @@ class Group():
 
                 output.append("{} - {}".format(i + 1, item))
 
-            output.append('')
+            output.append("")
 
         players = [item for item in self.list if not item.is_goalkeeper]
 

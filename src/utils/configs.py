@@ -1,7 +1,12 @@
-import yaml
+import os
+
 from pprint import pprint
 
-CONFIGS = yaml.safe_load(open("./configs.yml"))
+import yaml
+
+config_path = "./example_configs.yml" if 'TEST' in os.environ else "./configs.yml"
+
+CONFIGS = yaml.safe_load(open(config_path))
 
 def get(path):
     attrs = path.split(".")
