@@ -42,9 +42,13 @@ class Group():
             self.should_sync = True
 
     def remove(self, player):
-        if self.__contains__(player):
-            self.list.remove(ListItem(player))
-            self.should_sync = True
+        for i, item in enumerate(self.list):
+            if item.user == player:
+                self.list.pop(i)
+                self.should_sync = True
+                return True
+
+        return False
 
     def reset(self):
         self.list = []

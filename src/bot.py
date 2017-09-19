@@ -94,8 +94,7 @@ class Bot:
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def naovou(self, bot, update, user):
-        if user in group:
-            group.remove(user)
+        if group.remove(user):
             update.message.reply_text("{} removido da lista de presença.".format(user))
         else:
             update.message.reply_text("{} não está na lista de presença.".format(user))
