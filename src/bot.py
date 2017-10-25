@@ -32,7 +32,6 @@ def get_next_datetime(date):
     return temp
 
 
-
 class Bot:
     def __init__(self, job_queue):
         self.job_queue = job_queue
@@ -44,6 +43,7 @@ class Bot:
 
     def schedule_open_check_in(self):
         def open_check_in_callback(bot, job):
+            group.reset()
             group.open_check_in()
             bot.send_message(chat_id=configs.get("RACHA.GROUP_ID"), text="Registros abertos.")
 
@@ -59,7 +59,6 @@ class Bot:
         first_date = get_next_datetime(configs.get("RACHA.CLOSE_CHECK_IN_DATE"))
 
         self.job_queue.run_repeating(close_check_in_callback, timedelta(days=7), first=first_date)
-
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou(self, bot, update, user):
@@ -82,7 +81,7 @@ class Bot:
         if len(kwargs["args"]) != 3:
             return update.message.reply_text("`/convidado <nome> <sobrenome> <rating>`")
 
-        guest_id = user.id + int(time.time()) - 3 * 60 * 60
+        guest_id = user.uid + int(time.time()) - 3 * 60 * 60
         first_name = kwargs["args"][0]
         last_name = kwargs["args"][1]
         rating = float(kwargs["args"][2])
@@ -134,4 +133,26 @@ class Bot:
         update.message.reply_text("Saving...")
         group.save()
 
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def naovai(self, bot, update, user, **kwargs):
+        term = ''
 
+        if kwargs["args"]:
+            term = ' '.join(kwargs["args"])
+
+        result = group.find(term)
+
+        if not result:
+            return update.message.reply_text("Can't find player with '{}'".format(term))
+
+        if len(result) == 1 and group.remove(result[0]):
+            return update.message.reply_text("{} removido da lista de presença.".format(result[0]))
+
+        logger.info(result)
+
+        output = ''
+
+        for i, player in enumerate(result):
+            output += '{} - {}\n'.format(i + 1, player)
+
+        return update.message.reply_text(output)

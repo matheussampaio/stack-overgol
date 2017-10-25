@@ -74,7 +74,7 @@ class Teams:
         teams = [[] for _ in range(length)]
 
         # Enquanto houver jogador não alocado
-        while len(players):
+        while players:
             # Coloca o melhor jogador no time mais fraco
             self.get_weakest_team(teams).append(players.pop())
 
@@ -119,7 +119,7 @@ class Teams:
         for color, team in self.teams.items():
             output.append("Time {}:".format(color))
 
-            for i, player in enumerate(team):
+            for player in team:
                 name = str(player).strip()
 
                 if len(name) > 15:

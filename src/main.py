@@ -35,6 +35,7 @@ def main():
 
     # ADMIN
     dp.add_handler(CommandHandler("convidado", STACK_OVERGOL_CORE.convidado, pass_args=True))
+    dp.add_handler(CommandHandler("naovai", STACK_OVERGOL_CORE.naovai, pass_args=True))
     dp.add_handler(CommandHandler("abrir", STACK_OVERGOL_CORE.abrir))
     dp.add_handler(CommandHandler("fechar", STACK_OVERGOL_CORE.fechar))
     dp.add_handler(CommandHandler("resetar", STACK_OVERGOL_CORE.resetar))
