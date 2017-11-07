@@ -15,36 +15,22 @@ def main():
         ratingsreader = csv.reader(ratingsfile, delimiter=',', quotechar='|')
 
         for i, row in enumerate(ratingsreader):
-            if i and row[1] != '-' and row[2] != '-':
-                nome = row[0]
-                stars = float(row[1])
-                jogador_id = row[2]
+            # skip the header
+            if i == 0:
+                continue
 
-                print("{}... ".format(nome), end="")
+            try:
+                rating = int(row[3])
+            except:
+                rating = 3
 
-                path = "users/{}/groups/{}/stars".format(jogador_id, STACK_OVERGOL_ID)
+            old_rating = database.child("users/{}/rating".format(row[0])).get().val()
 
-                oldStars = db.child(path).get().val()
-
-                if (oldStars == stars):
-                    print("OK")
-                    continue
-
-                if DEBUG:
-                    print("(DEBUG) Atual: {} -> Novo: {}".format(oldStars, stars))
-                    continue
-
-                user_input = input("Atual: {} -> Novo: {} (s/n)? ".format(oldStars, stars))
-
-                if (user_input != "s"):
-                    print("Usuário não atualizado.")
-                    continue
-
-                db.child(path).set(stars)
-                print("Atualizado.")
+            if old_rating and old_rating != rating:
+                database.child("users/{}/rating".format(row[0])).set(rating)
 
 def get_missing_ratings_from_current_list(group_id, show_id=False):
-    lista = db.child("groups/{}/lista".format(group_id)).get().val().values()
+    lista = database.child("groups/{}/lista".format(group_id)).get().val().values()
 
     lista = sorted(lista, key=itemgetter("first_name", "last_name"))
 
@@ -53,7 +39,7 @@ def get_missing_ratings_from_current_list(group_id, show_id=False):
         first_name = user["first_name"].upper()
         last_name = user["last_name"].upper()
 
-        rating = db.child("users/{}/groups/{}/stars".format(id, group_id)).get().val()
+        rating = database.child("users/{}/groups/{}/stars".format(id, group_id)).get().val()
 
         if (rating is None):
             if show_id:
@@ -92,9 +78,11 @@ def update_users_object():
 
     database.child("refactor/users").set(new_users_format)
 
+
+
 if __name__ == "__main__":
     # get_missing_ratings_from_current_list(STACK_OVERGOL_ID)
 
-    # main()
+    main()
 
-    update_users_object()
+    # update_users_object()
