@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class User:
-    def __init__(self, uid, first_name, last_name, rating=3.00, is_admin=False, is_subscriber=False, *args, **kwargs):
+    def __init__(self, uid, first_name, last_name="", rating=3.00, is_admin=False, is_subscriber=False, *args, **kwargs):
         self._uid = uid
         self._first_name = first_name
         self._last_name = last_name

@@ -44,6 +44,7 @@ class Bot:
     def schedule_open_check_in(self):
         def open_check_in_callback(bot, job):
             group.reset()
+            bot.send_message(chat_id=configs.get("RACHA.GROUP_ID"), text="Registros resetados.")
             group.open_check_in()
             bot.send_message(chat_id=configs.get("RACHA.GROUP_ID"), text="Registros abertos.")
 

@@ -7,7 +7,7 @@ class TestUser(unittest.TestCase):
     def test_for_default_properties(self):
         user = User(1, "first_name", "last_name", rating=3.0)
 
-        user.id.should.be.equal(1)
+        user.uid.should.be.equal(1)
         user.first_name.should.be.equal("first_name")
         user.last_name.should.be.equal("last_name")
 
@@ -31,3 +31,8 @@ class TestUser(unittest.TestCase):
         user = User(1, "first_name", "last_name")
 
         str(user).should.be.equal("first_name last_name")
+
+    def test_create_user_without_last_name(self):
+        user = User(1, "first_name")
+
+        user.last_name.should.be.equal("")
