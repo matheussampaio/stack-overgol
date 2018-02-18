@@ -1,6 +1,9 @@
 import time
 from functools import total_ordering
 
+from utils import configs
+
+
 @total_ordering
 class ListItem:
     def __init__(self, user, is_goalkeeper=False, is_guest=False, timestamp=False):
@@ -47,10 +50,13 @@ class ListItem:
         return self.timestamp < other.timestamp
 
     def __str__(self):
-        if self.user.is_subscriber:
+        if self.user.is_subscriber and not configs.get("RACHA.HIDE_SUBSCRIBER_LABEL"):
             return "{} (M)".format(str(self.user))
 
-        return "{} (C)".format(str(self.user))
+        if not self.user.is_subscriber and not configs.get("RACHA.HIDE_GUEST_LABEL"):
+            return "{} (C)".format(str(self.user))
+
+        return str(self.user)
 
     def __repr__(self):
         return "{} is_goalkeeper={} is_guest={} timestamp={}".format(self.__class__, self.is_goalkeeper, self.is_guest,
