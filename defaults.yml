@@ -36,8 +36,11 @@ RACHA:
     # Se CLOSE_CHECK_IN_DATE for definido, o bot irá automaticamente fechar o check in do racha.
     CLOSE_CHECK_IN_DATE: tuesday 15:00
 
-    # Hide (M) after user's name
+    # Escode (M) depois do nome do jogador
     HIDE_SUBSCRIBER_LABEL: true
 
-    # Hide (C) after user's name
+    # Esconde (C) depois do nome do jogador
     HIDE_GUEST_LABEL: true
+
+    # Mostra lista de jogadores substitutos quando usar o comando /times
+    HAS_SUBSTITUTES_LIST: false

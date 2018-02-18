@@ -18,6 +18,7 @@ class Teams:
         self.range_variation = configs.get("RACHA.RATING_RANGE_VARIATION")
 
         self.teams = {}
+        self.substitutes = []
 
     def complete_players(self, players):
         """
@@ -68,6 +69,10 @@ class Teams:
         players = self.add_variation_to_players(players)
         players = self.sort_players(players)
 
+        substitutes = copy.deepcopy((all_players[self.max_players:]))
+
+        self.substitutes = self.add_variation_to_players(substitutes)
+
         # Cria arrays para cada time
         length = int(len(players) / self.max_players_per_team)
 
@@ -78,7 +83,7 @@ class Teams:
             # Coloca o melhor jogador no time mais fraco
             self.get_weakest_team(teams).append(players.pop())
 
-        # Mistura os times finais para varias as cores dos jogadores
+        # Mistura os times finais para variar as cores dos jogadores
         random.shuffle(teams)
 
         self.teams = {}
@@ -87,7 +92,6 @@ class Teams:
 
         for color, team in zip(colors, teams):
             self.teams[color] = [user for user in team]
-
 
     def serialize(self):
         teams = {}
@@ -106,20 +110,32 @@ class Teams:
 
         colors = list(self.teams.keys())
 
-        if len(colors) == 2:
-            output.append("Ordem dos jogos:\n 1. {} x {}".format( \
-                colors[0], colors[1]))
-        elif len(colors) == 3:
-            output.append("Ordem dos jogos:\n 1. {} x {}\n 2. {}\n".format( \
-                colors[0], colors[1], colors[2]))
-        else:
-            output.append("Ordem dos jogos:\n 1. {} x {}\n 2. {}\n 3. {}\n".format( \
-                colors[0], colors[1], colors[2], colors[3]))
+        if len(colors) > 2:
+            output.append("Ordem dos jogos:")
+            output.append(" 1. {} x {}".format(colors[0], colors[1]))
+
+            for i, color in enumerate(colors[2:]):
+                output.append(" {}. {}".format(i + 2, color))
+
+            output.append("")
 
         for color, team in self.teams.items():
             output.append("Time {}:".format(color))
 
             for player in team:
+                name = str(player).strip()
+
+                if len(name) > 15:
+                    name = name[:12] + "..."
+
+                output.append(" - {!s:<15} ({:.1f})".format(name, player.rating))
+
+            output.append("")
+
+        if configs.get("RACHA.HAS_SUBSTITUTES_LIST"):
+            output.append("Reservas:")
+
+            for player in self.substitutes:
                 name = str(player).strip()
 
                 if len(name) > 15:
