@@ -2,10 +2,10 @@
 ############# Configurações do Bot #############
 ################################################
 
-# Ativar modo DEBUG
-DEBUG: true
-
 TELEGRAM:
+    # Group id
+    GROUP_ID: 1234567890
+
     # Telegram bot token
     # Pode ser conseguido conversando com BotFather (https://telegram.me/BotFather): /newbot, /token
     TOKEN: "token"
@@ -17,20 +17,12 @@ FIREBASE:
     STORAGE_BUCKET: "projectId.appspot.com"
     SERVICE_ACCOUNT: "./firebase.json"
 
-# Columna "TZ": https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-TIMEZONE: "America/Recife"
-
-SYNC_INTERVAL: 300
 
 ################################################
 ############# Configurações do Racha ###########
 ################################################
 
-
 RACHA:
-    # Group id
-    GROUP_ID: "GROUP_ID"
-
     # Número de times
     MAX_TEAMS: 4
 
@@ -39,12 +31,6 @@ RACHA:
 
     # Cores usadas nos times
     TEAMS_COLORS: ["Azul", "Vermelho", "Verde", "Branco"]
-
-    # Se jogador não tiver rating, bot usa DEFAULT_RATING
-    DEFAULT_RATING: 3.00
-
-    # Quando o bot calcula os times, para cada jogador um número entre o range abaixo é somado ao rating do jogador
-    RATING_RANGE_VARIATION: [-0.25, 0.25]
 
     # Se OPEN_CHECK_IN_DATE for definido, o bot irá automaticamente abrir o check in do racha.
     OPEN_CHECK_IN_DATE: monday 20:00
