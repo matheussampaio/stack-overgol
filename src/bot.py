@@ -126,12 +126,12 @@ class Bot:
 
     @Command(onde=False, quando=False, quem="ADMIN")
     def load(self, bot, update, user):
-        update.message.reply_text("Loading...")
+        update.message.reply_text("Carregando dados...")
         group.load()
 
     @Command(onde=False, quando=False, quem="ADMIN")
     def save(self, bot, update, user):
-        update.message.reply_text("Saving...")
+        update.message.reply_text("Salvando dados...")
         group.save()
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
@@ -144,7 +144,7 @@ class Bot:
         result = group.find(term)
 
         if not result:
-            return update.message.reply_text("Can't find player with '{}'".format(term))
+            return update.message.reply_text("Não consigo achar nenhum jogador com '{}'".format(term))
 
         if len(result) == 1 and group.remove(result[0]):
             return update.message.reply_text("{} removido da lista de presença.".format(result[0]))
