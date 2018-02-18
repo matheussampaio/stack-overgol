@@ -19,7 +19,7 @@ class Command(object):
             user = group.get_user_or_create(data)
 
             # ONDE: "GRUPO", False
-            if self.onde == "GRUPO" and update.message.chat.id != int(configs.get("RACHA.GROUP_ID")):
+            if self.onde == "GRUPO" and update.message.chat.id != int(configs.get("TELEGRAM.GROUP_ID")):
                 return update.message.reply_text("Esse comando só é válido dentro do grupo.")
 
             # QUEM: "ADMIN", "MENSALISTA", False
