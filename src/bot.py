@@ -149,8 +149,6 @@ class Bot:
         if len(result) == 1 and group.remove(result[0]):
             return update.message.reply_text("{} removido da lista de presença.".format(result[0]))
 
-        logger.info(result)
-
         output = ''
 
         for i, player in enumerate(result):

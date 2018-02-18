@@ -128,7 +128,6 @@ class Group():
         def on_save_time(bot, job):
             if self.should_sync:
                 self.save()
-                logger.info("sync")
 
         if self.job_queue:
             self.job_queue.run_repeating(on_save_time, configs.get("SYNC_INTERVAL"))

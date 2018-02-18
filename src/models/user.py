@@ -58,9 +58,6 @@ class User:
         return "{} uid={} first_name={} last_name={} rating={} is_admin={} is_subscriber={}".format(self.__class__, self.uid, self.first_name, self.last_name, self.rating, self.is_admin, self.is_subscriber)
 
     def __eq__(self, other):
-        logger.info('qs {} {}'.format(str(self), str(other)))
-        logger.info(isinstance(other, self.__class__))
-        logger.info(self.uid == other.uid)
         if isinstance(other, self.__class__) and self.uid == other.uid:
             return True
 
