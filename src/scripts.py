@@ -14,10 +14,8 @@ def main():
     with open(RATINGS_FILE_NAME, newline='') as ratingsfile:
         ratingsreader = csv.reader(ratingsfile, delimiter=',', quotechar='|')
 
-        print('for')
         for i, row in enumerate(ratingsreader):
-            # skip the header
-            if i == 0:
+            if not i or not row[0]:
                 continue
 
             try:
@@ -37,7 +35,20 @@ def main():
                     "uuid": int(row[0])
                 })
             else:
-                database.child("users/{}/is_subscriber".format(row[0])).set(row[5] == '1')
+                database.child("users/{}".format(row[0])).update({
+                    "rating": 3 if row[3] == '0' else float(row[3]),
+                    "is_admin": row[4] == '1',
+                    "is_subscriber": row[5] == '1'
+                })
+
+            user = database.child("list/{}".format(row[0])).get().val()
+
+            if user:
+                database.child("list/{}/user".format(row[0])).update({
+                    "rating": 3 if row[3] == '0' else float(row[3]),
+                    "is_admin": row[4] == '1',
+                    "is_subscriber": row[5] == '1'
+                })
 
 def get_missing_ratings_from_current_list(group_id, show_id=False):
     lista = database.child("groups/{}/lista".format(group_id)).get().val().values()
