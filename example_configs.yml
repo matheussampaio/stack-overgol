@@ -2,6 +2,9 @@
 ############# Configurações do Bot #############
 ################################################
 
+# O bot sempre vai permitir os comandos desse usuário
+MASTER_ADMIN_TELEGRAM_ID: 1234567890
+
 TELEGRAM:
     # Group id
     GROUP_ID: 1234567890

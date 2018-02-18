@@ -18,6 +18,10 @@ class Command(object):
 
             user = group.get_user_or_create(data)
 
+            # Sempre permitir mensagens vindas do Master Admin
+            if user.uid == int(configs.get("MASTER_ADMIN_TELEGRAM_ID")):
+                return f(_self, bot, update, user, *args, **kwargs)
+
             # ONDE: "GRUPO", False
             if self.onde == "GRUPO" and update.message.chat.id != int(configs.get("TELEGRAM.GROUP_ID")):
                 return update.message.reply_text("Esse comando só é válido dentro do grupo.")
@@ -35,6 +39,7 @@ class Command(object):
 
             # TODO: Verificar se o comando foi enviado um pouco antes do check-in abrir, porém o bot só
             #       processou o comando após alguns segundos.
+            #
             # hora_de_abrir = group_value["hora_abrir_registros"]
             # epoch_abrir = time.mktime(time.strptime(hora_de_abrir, "%H:%Mh %d/%m/%y"))
             #
@@ -45,6 +50,6 @@ class Command(object):
             if self.quando == "FECHADO" and group.is_check_in_open():
                 return update.message.reply_text("Esse comando não pode ser usado com os registros abertos.")
 
-            f(_self, bot, update, user, *args, **kwargs)
+            return f(_self, bot, update, user, *args, **kwargs)
 
         return wrapper_f
