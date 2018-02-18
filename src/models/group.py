@@ -162,7 +162,7 @@ class Group():
 
             for i, item_player in enumerate(items_players):
                 if i == configs.get("RACHA.MAX_TEAMS") * configs.get("RACHA.MAX_NUMBER_PLAYERS_TEAM"):
-                    output.append("Lista de Espera (Jogador):")
+                    output.append("\nLista de Espera (Jogador):")
 
                 output.append("{} - {}".format(i + 1, item_player))
 
