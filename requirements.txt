@@ -1,4 +1,4 @@
-python-telegram-bot==7.0.1
+python-telegram-bot==9.0.0
 Pyrebase==3.0.27
 jwt==0.3.2
 PyYAML==3.12
