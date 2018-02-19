@@ -34,7 +34,7 @@ RACHA:
     DEFAULT_RATING: 3.00
 
     # Quando o bot calcula os times, para cada jogador um número entre o range abaixo é somado ao rating do jogador
-    RATING_RANGE_VARIATION: [-0.25, 0.25]
+    RATING_RANGE_VARIATION: [-0.50, 0.50]
 
     # Se OPEN_CHECK_IN_DATE for definido, o bot irá automaticamente abrir o check in do racha.
     OPEN_CHECK_IN_DATE: monday 20:00
