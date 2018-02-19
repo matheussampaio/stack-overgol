@@ -90,6 +90,9 @@ class Bot:
         last_name = kwargs["args"][1]
         rating = float(kwargs["args"][2])
 
+        if rating < 1:
+            rating = 1.0
+
         guest = User(guest_id, first_name, last_name, rating)
 
         group.add(guest, is_guest=True)
