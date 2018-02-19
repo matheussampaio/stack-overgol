@@ -18,6 +18,9 @@ SYNC_INTERVAL: 60
 MASTER_ADMIN_TELEGRAM_ID: 227260861
 
 RACHA:
+    # Quando /times for executado, o bot vai colocar jogadores fakes até completar os times
+    COMPLETE_TEAMS_WITH_FAKE_PLAYERS: true
+
     # Número de times
     MAX_TEAMS: 4
 

@@ -63,19 +63,27 @@ class Teams:
 
     def calculate_teams(self, all_players):
         """ Calcula os times """
-        players = copy.deepcopy((all_players[:self.max_players]))
+        players = copy.deepcopy((all_players[:self.max_players or len(all_players)]))
 
-        players = self.complete_players(players)
-        players = self.add_variation_to_players(players)
+        if configs.get("RACHA.COMPLETE_TEAMS_WITH_FAKE_PLAYERS"):
+            players = self.complete_players(players)
+
+        if configs.get("RACHA.RATING_RANGE_VARIATION"):
+            players = self.add_variation_to_players(players)
+
         players = self.sort_players(players)
 
-        substitutes = copy.deepcopy((all_players[self.max_players:]))
+        substitutes = copy.deepcopy((all_players[self.max_players or len(all_players):]))
 
-        self.substitutes = self.add_variation_to_players(substitutes)
+        if configs.get("RACHA.RATING_RANGE_VARIATION"):
+            self.substitutes = self.add_variation_to_players(substitutes)
+
+        if not self.max_players_per_team:
+            length = self.max_teams
+        else:
+            length = int(len(players) / self.max_players_per_team)
 
         # Cria arrays para cada time
-        length = int(len(players) / self.max_players_per_team)
-
         teams = [[] for _ in range(length)]
 
         # Enquanto houver jogador não alocado
@@ -119,29 +127,29 @@ class Teams:
 
             output.append("")
 
-        for color, team in self.teams.items():
+        for color, team in sorted(self.teams.items()):
             output.append("Time {}:".format(color))
 
-            for player in team:
+            for i, player in enumerate(team):
                 name = str(player).strip()
 
                 if len(name) > 15:
                     name = name[:12] + "..."
 
-                output.append(" - {!s:<15} ({:.1f})".format(name, player.rating))
+                output.append("{:<2} - {!s:<15} ({:.1f})".format(i + 1, name, player.rating))
 
             output.append("")
 
-        if configs.get("RACHA.HAS_SUBSTITUTES_LIST"):
+        if configs.get("RACHA.HAS_SUBSTITUTES_LIST") and self.substitutes:
             output.append("Reservas:")
 
-            for player in self.substitutes:
+            for i, player in enumerate(self.substitutes):
                 name = str(player).strip()
 
                 if len(name) > 15:
                     name = name[:12] + "..."
 
-                output.append(" - {!s:<15} ({:.1f})".format(name, player.rating))
+                output.append("{:<2} - {!s:<15} ({:.1f})".format(i + 1, name, player.rating))
 
             output.append("")
 
