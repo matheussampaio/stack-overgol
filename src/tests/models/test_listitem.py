@@ -43,8 +43,8 @@ class TestListItem(unittest.TestCase):
 
         (self.li_gk_guest < l_li_gk_guest).should.be.true
 
-    def test_guest_str_should_contains_C(self):
+    def _test_guest_str_should_contains_C(self):
         (str(self.li_gk_guest)).should.be.equal("{} (C)".format(self.u_gk_guest))
 
-    def test_sub_str_should_contains_M(self):
+    def _test_sub_str_should_contains_M(self):
         (str(self.li_gk_sub)).should.be.equal("{} (M)".format(self.u_gk_sub))
