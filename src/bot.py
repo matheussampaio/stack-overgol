@@ -45,8 +45,10 @@ class Bot:
         def open_check_in_callback(bot, job):
             group.reset()
             bot.send_message(chat_id=configs.get("TELEGRAM.GROUP_ID"), text="Registros resetados.")
-            group.open_check_in()
-            bot.send_message(chat_id=configs.get("TELEGRAM.GROUP_ID"), text="Registros abertos.")
+
+            if not group.is_check_in_open():
+                group.open_check_in()
+                bot.send_message(chat_id=configs.get("TELEGRAM.GROUP_ID"), text="Registros abertos.")
 
         first_date = get_next_datetime(configs.get("RACHA.OPEN_CHECK_IN_DATE"))
 
@@ -54,8 +56,9 @@ class Bot:
 
     def schedule_close_check_in(self):
         def close_check_in_callback(bot, job):
-            group.close_check_in()
-            bot.send_message(chat_id=configs.get("TELEGRAM.GROUP_ID"), text="Registros fechados.")
+            if group.is_check_in_open():
+                group.close_check_in()
+                bot.send_message(chat_id=configs.get("TELEGRAM.GROUP_ID"), text="Registros fechados.")
 
         first_date = get_next_datetime(configs.get("RACHA.CLOSE_CHECK_IN_DATE"))
 
