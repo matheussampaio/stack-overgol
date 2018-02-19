@@ -1,9 +1,10 @@
+import os
 from pprint import pprint
 
 import yaml
 
 default_config_path = "./defaults.yml"
-config_path = "./configs.yml"
+config_path = "./example_configs.yml" if 'TEST' in os.environ else "./configs.yml"
 
 DEFAULT_CONFIGS = yaml.safe_load(open(default_config_path))
 CONFIGS = yaml.safe_load(open(config_path))
