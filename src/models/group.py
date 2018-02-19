@@ -61,7 +61,7 @@ class Group():
         return None
 
     def create_user(self, data):
-        user = User(uid=data["id"], **data)
+        user = User(uid=data["id"], rating=configs.get("RACHA.DEFAULT_RATING"), **data)
 
         self.all_users.append(user)
         self.should_sync = True
