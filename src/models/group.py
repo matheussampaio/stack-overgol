@@ -33,7 +33,13 @@ class Group():
 
     def add(self, player, is_goalkeeper=False, is_guest=False):
         if not self.__contains__(player):
-            self.list.append(ListItem(player, is_goalkeeper, is_guest))
+            self.list.append(ListItem(
+                player,
+                is_goalkeeper,
+                is_guest,
+                hide_guest_label=configs.get("RACHA.HIDE_GUEST_LABEL"),
+                hide_subscriber_label=configs.get("RACHA.HIDE_SUBSCRIBER_LABEL")
+            ))
             self.list.sort()
             self.should_sync = True
 
