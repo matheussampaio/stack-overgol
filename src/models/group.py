@@ -108,7 +108,12 @@ class Group():
 
                 user = User(uid, first_name, last_name, **user_values)
 
-                listitem = ListItem(user, **values)
+                listitem = ListItem(
+                    user,
+                    hide_guest_label=configs.get("RACHA.HIDE_GUEST_LABEL"),
+                    hide_subscriber_label=configs.get("RACHA.HIDE_SUBSCRIBER_LABEL"),
+                    **values
+                )
 
                 self.list.append(listitem)
 
