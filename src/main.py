@@ -34,20 +34,23 @@ def main():
     dp = updater.dispatcher
 
     # ADMIN
-    dp.add_handler(CommandHandler("convidado", STACK_OVERGOL_CORE.convidado, pass_args=True))
-    dp.add_handler(CommandHandler("naovai", STACK_OVERGOL_CORE.naovai, pass_args=True))
     dp.add_handler(CommandHandler("abrir", STACK_OVERGOL_CORE.abrir))
+    dp.add_handler(CommandHandler("convidado", STACK_OVERGOL_CORE.convidado, pass_args=True))
+    dp.add_handler(CommandHandler("convidado_agarrar", STACK_OVERGOL_CORE.convidado_agarrar, pass_args=True))
     dp.add_handler(CommandHandler("fechar", STACK_OVERGOL_CORE.fechar))
+    dp.add_handler(CommandHandler("load", STACK_OVERGOL_CORE.load))
+    dp.add_handler(CommandHandler("naovai", STACK_OVERGOL_CORE.naovai, pass_args=True))
     dp.add_handler(CommandHandler("resetar", STACK_OVERGOL_CORE.resetar))
     dp.add_handler(CommandHandler("save", STACK_OVERGOL_CORE.save))
-    dp.add_handler(CommandHandler("load", STACK_OVERGOL_CORE.load))
-    dp.add_handler(CommandHandler("times", STACK_OVERGOL_CORE.times))
+    dp.add_handler(CommandHandler("times", STACK_OVERGOL_CORE.times, pass_args=True))
+    dp.add_handler(CommandHandler("vai", STACK_OVERGOL_CORE.vai, pass_args=True))
+    dp.add_handler(CommandHandler("vai_agarrar", STACK_OVERGOL_CORE.vai_agarrar, pass_args=True))
 
     # ALL
+    dp.add_handler(CommandHandler("listar", STACK_OVERGOL_CORE.listar))
+    dp.add_handler(CommandHandler("naovou", STACK_OVERGOL_CORE.naovou))
     dp.add_handler(CommandHandler("vou", STACK_OVERGOL_CORE.vou))
     dp.add_handler(CommandHandler("vouagarrar", STACK_OVERGOL_CORE.vouagarrar))
-    dp.add_handler(CommandHandler("naovou", STACK_OVERGOL_CORE.naovou))
-    dp.add_handler(CommandHandler("listar", STACK_OVERGOL_CORE.listar))
 
     # log all errors
     dp.add_error_handler(error)

@@ -52,7 +52,7 @@ class Bot:
 
         first_date = get_next_datetime(configs.get("RACHA.OPEN_CHECK_IN_DATE"))
 
-        self.job_queue.run_repeating(open_check_in_callback, timedelta(days=7), first=first_date)
+        return self.job_queue.run_repeating(open_check_in_callback, timedelta(days=7), first=first_date)
 
     def schedule_close_check_in(self):
         def close_check_in_callback(bot, job):
@@ -62,23 +62,24 @@ class Bot:
 
         first_date = get_next_datetime(configs.get("RACHA.CLOSE_CHECK_IN_DATE"))
 
-        self.job_queue.run_repeating(close_check_in_callback, timedelta(days=7), first=first_date)
+        return self.job_queue.run_repeating(close_check_in_callback, timedelta(days=7), first=first_date)
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vou(self, bot, update, user):
         if user not in group:
             group.add(user)
-            update.message.reply_text("{} adicionado à lista de presença.".format(user))
-        else:
-            update.message.reply_text("{} já está na lista de presença.".format(user))
+            return update.message.reply_text("{} adicionado à lista de presença.".format(user))
+
+        return update.message.reply_text("{} já está na lista de presença.".format(user))
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def vouagarrar(self, bot, update, user):
         if user not in group:
             group.add(user, is_goalkeeper=True)
-            update.message.reply_text("{} adicionado à lista de goleiros.".format(user))
-        else:
-            update.message.reply_text("{} já está na lista de presença.".format(user))
+
+            return update.message.reply_text("{} adicionado à lista de goleiros.".format(user))
+
+        return update.message.reply_text("{} já está na lista de presença.".format(user))
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def convidado(self, bot, update, user, **kwargs):
@@ -96,68 +97,163 @@ class Bot:
         guest = User(guest_id, first_name, last_name, rating)
 
         group.add(guest, is_guest=True)
-        update.message.reply_text("{} adicionado à lista de convidados.".format(guest))
+
+        return update.message.reply_text("{} adicionado à lista de convidados.".format(guest))
+
+    @Command(onde="GRUPO", quando="ABERTO", quem=False)
+    def convidado_agarrar(self, bot, update, user, **kwargs):
+        if len(kwargs["args"]) != 2:
+            return update.message.reply_text("`/convidado_agarrar <nome> <sobrenome>`")
+
+        guest_id = user.uid + int(time.time()) - 3 * 60 * 60
+        first_name = kwargs["args"][0]
+        last_name = kwargs["args"][1]
+
+        guest = User(guest_id, first_name, last_name)
+
+        group.add(guest, is_goalkeeper=True, is_guest=True)
+
+        return update.message.reply_text("{} adicionado à lista de goleiros.".format(guest))
 
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def naovou(self, bot, update, user):
         if group.remove(user):
-            update.message.reply_text("{} removido da lista de presença.".format(user))
-        else:
-            update.message.reply_text("{} não está na lista de presença.".format(user))
+            return update.message.reply_text("{} removido da lista de presença.".format(user))
+
+        return update.message.reply_text("{} não está na lista de presença.".format(user))
 
     @Command(onde=False, quando=False, quem=False)
     def listar(self, bot, update, user):
-        return bot.sendMessage(update.message.chat_id, str(group))
+
+        return update.message.reply_text(text=str(group), parse_mode=ParseMode.MARKDOWN)
 
     @Command(onde=False, quando="FECHADO", quem="ADMIN")
     def abrir(self, bot, update, user):
         group.open_check_in()
-        update.message.reply_text("Registros abertos!")
+
+        return update.message.reply_text("Registros abertos!")
 
     @Command(onde=False, quando="ABERTO", quem="ADMIN")
     def fechar(self, bot, update, user):
         group.close_check_in()
-        update.message.reply_text("Registros fechados!")
+
+        return update.message.reply_text("Registros fechados!")
 
     @Command(onde=False, quando=False, quem="ADMIN")
     def resetar(self, bot, update, user):
         group.reset()
-        update.message.reply_text("Registros resetados!")
+
+        return update.message.reply_text("Registros resetados!")
 
     @Command(onde=False, quando=False, quem="ADMIN")
-    def times(self, bot, update, user):
-        teams_str = group.calculate_teams()
+    def times(self, bot, update, user, **kwargs):
+        if len(kwargs["args"]) != 0 and len(kwargs["args"]) != 2:
+            return update.message.reply_text(
+                text="Use `/times` ou `/times <number_teams> <team_size>`.",
+                parse_mode=ParseMode.MARKDOWN
+            )
 
-        bot.send_message(chat_id=update.message.chat_id, text=teams_str, parse_mode=ParseMode.MARKDOWN)
+        number_teams = configs.get("RACHA.MAX_TEAMS")
+        team_size = configs.get("RACHA.MAX_NUMBER_PLAYERS_TEAM")
+
+        if len(kwargs["args"]) == 2:
+            number_teams = int(kwargs["args"][0])
+            team_size = int(kwargs["args"][1])
+
+        teams_str = group.calculate_teams(
+            number_teams,
+            team_size,
+            team_colors=configs.get("RACHA.TEAMS_COLORS"),
+            rating_range_variation=configs.get("RACHA.RATING_RANGE_VARIATION"),
+            complete_team_with_fake_players=configs.get("RACHA.COMPLETE_TEAMS_WITH_FAKE_PLAYERS"),
+            with_substitutes=configs.get("RACHA.HAS_SUBSTITUTES_LIST")
+        )
+
+        return update.message.reply_text(text=teams_str, parse_mode=ParseMode.MARKDOWN)
 
     @Command(onde=False, quando=False, quem="ADMIN")
     def load(self, bot, update, user):
-        update.message.reply_text("Carregando dados...")
         group.load()
+
+        return update.message.reply_text("Carregando dados...")
 
     @Command(onde=False, quando=False, quem="ADMIN")
     def save(self, bot, update, user):
-        update.message.reply_text("Salvando dados...")
         group.save()
+
+        return update.message.reply_text("Salvando dados...")
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def naovai(self, bot, update, user, **kwargs):
-        term = ''
+        term = ""
 
         if kwargs["args"]:
-            term = ' '.join(kwargs["args"])
+            term = " ".join(kwargs["args"])
 
-        result = group.find(term)
+        players = group.find_on_list(term)
 
-        if not result:
+        if not players:
             return update.message.reply_text("Não consigo achar nenhum jogador com '{}'".format(term))
 
-        if len(result) == 1 and group.remove(result[0]):
-            return update.message.reply_text("{} removido da lista de presença.".format(result[0]))
+        if len(players) > 1:
+            output = "Vários jogadores encontrados, tente filtrar um pouco mais:\n"
 
-        output = ''
+            for i, player in enumerate(sorted(players, key=lambda p: p.full_name)):
+                output += " - {}\n".format(player)
 
-        for i, player in enumerate(result):
-            output += '{} - {}\n'.format(i + 1, player)
+            return update.message.reply_text(output)
 
-        return update.message.reply_text(output)
+        if group.remove(players[0]):
+            return update.message.reply_text("{} removido da lista de presença.".format(players[0]))
+
+        return update.message.reply_text("Error: {}.".format(players[0]))
+
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def vai(self, bot, update, user, **kwargs):
+        term = ""
+
+        if kwargs["args"]:
+            term = " ".join(kwargs["args"])
+
+        players = group.find_on_all_players(term, filter_players_on_list=True)
+
+        if not players:
+            return update.message.reply_text("Não consigo achar nenhum jogador com '{}'".format(term))
+
+        if len(players) > 1:
+            output = "Vários jogadores encontrados, tente filtrar um pouco mais:\n"
+
+            for i, player in enumerate(sorted(players, key=lambda p: p.full_name)):
+                output += " - {}\n".format(player)
+
+            return update.message.reply_text(output)
+
+        if group.add(players[0], is_guest=players[0].is_guest):
+            return update.message.reply_text("{} adicionado na lista de presença.".format(players[0]))
+
+        return update.message.reply_text("Error: {}".format(players[0]))
+
+    @Command(onde="GRUPO", quando=False, quem="ADMIN")
+    def vai_agarrar(self, bot, update, user, **kwargs):
+        term = ""
+
+        if kwargs["args"]:
+            term = " ".join(kwargs["args"])
+
+        players = group.find_on_all_players(term, filter_players_on_list=True)
+
+        if not players:
+            return update.message.reply_text("Não consigo achar nenhum jogador com '{}'".format(term))
+
+        if len(players) > 1:
+            output = "Vários jogadores encontrados, tente filtrar um pouco mais:\n"
+
+            for i, player in enumerate(sorted(players, key=lambda p: p.full_name)):
+                output += " - {}\n".format(player)
+
+            return update.message.reply_text(output)
+
+        if group.add(players[0], is_goalkeeper=True, is_guest=players[0].is_guest):
+            return update.message.reply_text("{} adicionado na lista de goleiros.".format(players[0]))
+
+        return update.message.reply_text("Error: {}".format(players[0]))

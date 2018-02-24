@@ -1,6 +1,7 @@
 import time
 from functools import total_ordering
 
+from models.user import User
 
 @total_ordering
 class ListItem:
@@ -51,12 +52,12 @@ class ListItem:
 
     def __str__(self):
         if self.user.is_subscriber and not self._hide_subscriber_label:
-            return "{} (M)".format(str(self.user))
+            return "{!s:<{short_name_length}} (M)".format(self.user.short_name, short_name_length=User.SHORT_NAME_LENGTH)
 
         if not self.user.is_subscriber and not self._hide_guest_label:
-            return "{} (C)".format(str(self.user))
+            return "{!s:<{short_name_length}} (C)".format(self.user.short_name, short_name_length=User.SHORT_NAME_LENGTH)
 
-        return str(self.user)
+        return "{!s:<{short_name_length}}".format(self.user.short_name, short_name_length=User.SHORT_NAME_LENGTH)
 
     def __repr__(self):
         return "{} is_goalkeeper={} is_guest={} timestamp={}".format(self.__class__, self.is_goalkeeper, self.is_guest,

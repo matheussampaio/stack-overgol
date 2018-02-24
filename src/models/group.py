@@ -43,11 +43,16 @@ class Group():
             self.list.sort()
             self.should_sync = True
 
+            return True
+
+        return False
+
     def remove(self, player):
         for i, item in enumerate(self.list):
             if item.user == player:
                 self.list.pop(i)
                 self.should_sync = True
+
                 return True
 
         return False
@@ -77,13 +82,13 @@ class Group():
     def get_user_or_create(self, data):
         return self.get_user(data) or self.create_user(data)
 
-    def calculate_teams(self):
+    def calculate_teams(self, number_teams, team_size, team_colors, rating_range_variation, complete_team_with_fake_players, with_substitutes):
         players = [item.user for item in self.list if not item.is_goalkeeper]
 
-        self.teams.calculate_teams(players)
+        self.teams.calculate_teams(players, number_teams, team_size, team_colors, rating_range_variation, complete_team_with_fake_players)
         self.should_sync = True
 
-        return str(self.teams)
+        return self.teams.format(with_substitutes)
 
     def save(self):
         database.child("teams").set(self.teams.serialize())
@@ -143,13 +148,22 @@ class Group():
         if self.job_queue:
             self.job_queue.run_repeating(on_save_time, configs.get("SYNC_INTERVAL"))
 
-    def find(self, term):
+    def find_on_list(self, term):
         return [item.user for item in self.list if term.lower() in str(item.user).lower()]
+
+    def find_on_all_players(self, term, filter_players_on_list=False):
+        players = [player for player in self.all_users if term.lower() in player.full_name.lower()]
+
+        if filter_players_on_list:
+            players = [player for player in players if not self.__contains__(player)]
+
+        return players
 
     def __str__(self):
         output = [
+            "```",
             "Lista de Presença",
-            "=============",
+            ""
         ]
 
         items_goalkeepers = [item for item in self.list if item.is_goalkeeper]
@@ -161,7 +175,7 @@ class Group():
                 if i == configs.get("RACHA.MAX_TEAMS"):
                     output.append("\nLista de Espera (Goleiro):")
 
-                output.append("{} - {}".format(i + 1, item_goalkeeper))
+                output.append("{:>2} - {}".format(i + 1, item_goalkeeper))
 
             output.append("")
 
@@ -176,7 +190,9 @@ class Group():
                 if max_players and i == max_players:
                     output.append("\nLista de Espera (Jogador):")
 
-                output.append("{} - {}".format(i + 1, item_player))
+                output.append("{:>2} - {}".format(i + 1, item_player))
+
+        output.append("```")
 
         return "\n".join(output)
 
