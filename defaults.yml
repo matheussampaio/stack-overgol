@@ -15,7 +15,7 @@ SYNC_INTERVAL: 60
 ################################################
 
 # O bot sempre vai permitir os comandos desse usuário
-MASTER_ADMIN_TELEGRAM_ID: 227260861
+MASTER_ADMIN_TELEGRAM_ID: [227260861]
 
 RACHA:
     # Quando /times for executado, o bot vai colocar jogadores fakes até completar os times

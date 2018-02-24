@@ -19,7 +19,7 @@ class Command(object):
             user = group.get_user_or_create(data)
 
             # Sempre permitir mensagens vindas do Master Admin
-            if user.uid == int(configs.get("MASTER_ADMIN_TELEGRAM_ID")):
+            if user.uid in configs.get("MASTER_ADMIN_TELEGRAM_ID"):
                 return f(_self, bot, update, user, *args, **kwargs)
 
             # ONDE: "GRUPO", False
