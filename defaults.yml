@@ -27,6 +27,9 @@ RACHA:
     # Número de jogadores por time
     MAX_NUMBER_PLAYERS_TEAM: 6
 
+    # Cores usadas nos times
+    TEAMS_COLORS: []
+
     # Se jogador não tiver rating, bot usa DEFAULT_RATING
     DEFAULT_RATING: 3.00
 
@@ -41,3 +44,9 @@ RACHA:
 
     # Mostra lista de jogadores substitutos quando usar o comando /times
     HAS_SUBSTITUTES_LIST: false
+
+   # Se OPEN_CHECK_IN_DATE for definido, o bot irá automaticamente abrir o check in do racha.
+    OPEN_CHECK_IN_DATE: false
+
+    # Se CLOSE_CHECK_IN_DATE for definido, o bot irá automaticamente fechar o check in do racha.
+    CLOSE_CHECK_IN_DATE: false

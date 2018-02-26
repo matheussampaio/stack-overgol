@@ -58,7 +58,7 @@ class Teams:
         return min(teams, key=lambda team: sum([user.rating for user in team]))
 
 
-    def get_teams_labels(self, team_labels, teams):
+    def get_teams_labels(self, teams, team_labels=[]):
         if len(teams) <= len(team_labels):
             return team_labels[:len(teams)]
 
@@ -78,7 +78,7 @@ class Teams:
         return team_labels + extra_team_labels
 
 
-    def calculate_teams(self, all_players, number_teams, team_size, teams_labels, rating_range_variation=False, complete_team_with_fake_players=False):
+    def calculate_teams(self, all_players, number_teams=2, team_size=5, teams_labels=[], rating_range_variation=False, complete_team_with_fake_players=False):
         """ Calcula os times """
         max_players = number_teams * team_size
 
@@ -115,7 +115,7 @@ class Teams:
         # Mistura os times finais para variar as cores dos jogadores
         random.shuffle(teams)
 
-        self.teams_labels = self.get_teams_labels(teams_labels, teams)
+        self.teams_labels = self.get_teams_labels(teams, teams_labels)
 
         self.teams = {}
 
