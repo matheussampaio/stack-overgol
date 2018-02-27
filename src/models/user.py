@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class User:
-    SHORT_NAME_LENGTH = 18
+    SHORT_NAME_LENGTH = 15
 
     def __init__(self, uid, first_name, last_name="", rating=3.00, is_admin=False, is_subscriber=False, *args, **kwargs):
         self._uid = uid

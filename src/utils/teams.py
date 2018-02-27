@@ -154,7 +154,7 @@ class Teams:
             output.append("Time {}:".format(team_label))
 
             for i, player in enumerate(team):
-                output.append("{:>2} - {!s:<{short_name_length}} ({:.1f})".format(i + 1, player.short_name, player.rating, short_name_length=User.SHORT_NAME_LENGTH))
+                output.append("{:>2}. {!s:<{short_name_length}} {:.1f}".format(i + 1, player.short_name, player.rating, short_name_length=User.SHORT_NAME_LENGTH))
 
             output.append("")
 
@@ -162,7 +162,7 @@ class Teams:
             output.append("Reservas:")
 
             for i, player in enumerate(self.substitutes):
-                output.append("{:>2} - {!s:<{short_name_length}} ({:.1f})".format(i + 1, player.short_name, player.rating, short_name_length=User.SHORT_NAME_LENGTH))
+                output.append("{:>2}. {!s:<{short_name_length}} {:.1f}".format(i + 1, player.short_name, player.rating, short_name_length=User.SHORT_NAME_LENGTH))
 
             output.append("")
 

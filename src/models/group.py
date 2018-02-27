@@ -175,7 +175,7 @@ class Group():
                 if i == configs.get("RACHA.MAX_TEAMS"):
                     output.append("\nLista de Espera (Goleiro):")
 
-                output.append("{:>2} - {}".format(i + 1, item_goalkeeper))
+                output.append("{:>2}. {}".format(i + 1, item_goalkeeper))
 
             output.append("")
 
@@ -190,7 +190,7 @@ class Group():
                 if max_players and i == max_players:
                     output.append("\nLista de Espera (Jogador):")
 
-                output.append("{:>2} - {}".format(i + 1, item_player))
+                output.append("{:>2}. {}".format(i + 1, item_player))
 
         output.append("```")
 
