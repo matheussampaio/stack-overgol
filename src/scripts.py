@@ -29,14 +29,14 @@ def main():
                 database.child("users/{}".format(row[0])).set({
                     "first_name": row[1],
                     "last_name": row[2],
-                    "rating": 3 if row[3] == '0' else float(row[3]),
+                    "rating": float(row[3]) or 3,
                     "is_admin": row[4] == '1',
                     "is_subscriber": row[5] == '1',
                     "uuid": int(row[0])
                 })
             else:
                 database.child("users/{}".format(row[0])).update({
-                    "rating": 3 if row[3] == '0' else float(row[3]),
+                    "rating": float(row[3]) or 3,
                     "is_admin": row[4] == '1',
                     "is_subscriber": row[5] == '1'
                 })
@@ -45,7 +45,7 @@ def main():
 
             if user:
                 database.child("list/{}/user".format(row[0])).update({
-                    "rating": 3 if row[3] == '0' else float(row[3]),
+                    "rating": float(row[3]) or 3,
                     "is_admin": row[4] == '1',
                     "is_subscriber": row[5] == '1'
                 })
