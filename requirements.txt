@@ -1,7 +1,7 @@
-python-telegram-bot==9.0.0
+python-telegram-bot==10.0.1
 Pyrebase==3.0.27
 jwt==0.3.2
 PyYAML==3.12
-nose2==0.6.5
-sure==1.4.6
-pylint==1.7.2
+nose2==0.7.4
+sure==1.4.7
+pylint==1.8.2
