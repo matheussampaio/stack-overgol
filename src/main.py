@@ -22,7 +22,7 @@ from bot import Bot
 
 
 def error(bot, update, err):
-    logger.warn('Update "%s" caused error "%s"', update, err)
+    logger.error('Update "%s" caused error "%s"', update, err)
 
 
 def main():

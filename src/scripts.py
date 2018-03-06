@@ -32,7 +32,7 @@ def main():
                     "rating": float(row[3]) or 3,
                     "is_admin": row[4] == '1',
                     "is_subscriber": row[5] == '1',
-                    "uuid": int(row[0])
+                    "uid": int(row[0])
                 })
             else:
                 database.child("users/{}".format(row[0])).update({
