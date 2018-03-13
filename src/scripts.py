@@ -26,6 +26,8 @@ def main():
             user = database.child("users/{}".format(row[0])).get().val()
 
             if not user:
+                print('creating user: {} {}'.format(row[1], row[2]))
+
                 database.child("users/{}".format(row[0])).set({
                     "first_name": row[1],
                     "last_name": row[2],
@@ -35,15 +37,23 @@ def main():
                     "uid": int(row[0])
                 })
             else:
+                print('updating user: {} {}'.format(row[1], row[2]))
+
                 database.child("users/{}".format(row[0])).update({
                     "rating": float(row[3]) or 3,
-                    "is_admin": row[4] == '1',
+                    "is_admin": row[5] == '1',
                     "is_subscriber": row[5] == '1'
                 })
+
+            for i, prop in enumerate(["uid", "first_name", "last_name", "rating", "is_admin", "is_subscriber"]):
+                if user[prop] != row[i]:
+                    print('chaing {} from {} to {}'.format(prop, user[prop], row[i]))
 
             user = database.child("list/{}".format(row[0])).get().val()
 
             if user:
+                print('updating list item: {} {}'.format(row[1], row[2]))
+
                 database.child("list/{}/user".format(row[0])).update({
                     "rating": float(row[3]) or 3,
                     "is_admin": row[4] == '1',
