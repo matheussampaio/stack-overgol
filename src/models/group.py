@@ -22,6 +22,7 @@ class Group():
     def init(self, job_queue):
         self.job_queue = job_queue
         self.shedule_save()
+        self.watch_updates()
 
     def open_check_in(self):
         self.check_in_open = True
@@ -63,6 +64,13 @@ class Group():
 
     def is_check_in_open(self):
         return self.check_in_open
+
+    def get_user_list_item(self, user):
+        for item in self.list:
+            if user == item.user:
+                return item
+
+        return None
 
     def get_user(self, data):
         for user in self.all_users:
@@ -148,6 +156,47 @@ class Group():
         if self.job_queue:
             self.job_queue.run_repeating(on_save_time, configs.get("SYNC_INTERVAL"))
 
+    def watch_updates(self):
+        def update_listitem(user):
+            listitem = self.get_user_list_item(user)
+
+            if listitem:
+                listitem.user = user
+                database.child("list").child(user.uid).set(listitem.serialize())
+
+        def update_user(user, payload):
+            if "rating" in payload:
+                user.rating = payload["rating"]
+
+            if "is_admin" in payload:
+                user.is_admin = payload["is_admin"]
+
+            if "is_subscriber" in payload:
+                user.is_subscriber = payload["is_subscriber"]
+
+            database.child("users").child(user.uid).set(user.serialize())
+
+        def update(path, payload):
+            user = self.get_user(payload)
+
+            if user:
+                update_user(user, payload)
+                update_listitem(user)
+
+            database.child("updates").child(path).remove()
+
+        def updates_handler(message):
+            if message["data"] is None:
+                return
+
+            if message["path"] != "/":
+                return update(message["path"], message["data"]["payload"])
+
+            for key, changes in message["data"].items():
+                update(key, changes["payload"])
+
+        database.child("updates").stream(updates_handler)
+
     def find_on_list(self, term):
         return [item.user for item in self.list if term.lower() in str(item.user).lower()]
 
@@ -200,10 +249,6 @@ class Group():
         return "{} list={}".format(self.__class__, self.list)
 
     def __contains__(self, user):
-        for item in self.list:
-            if user == item.user:
-                return True
-
-        return False
+        return self.get_user_list_item(user) is not None
 
 group = Group()

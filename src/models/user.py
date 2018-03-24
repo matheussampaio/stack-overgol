@@ -6,27 +6,15 @@ class User:
     SHORT_NAME_LENGTH = 15
 
     def __init__(self, uid, first_name, last_name="", rating=3.00, is_admin=False, is_subscriber=False, *args, **kwargs):
-        self._uid = uid
-        self._first_name = first_name
-        self._last_name = last_name
+        self.uid = uid
+        self.first_name = first_name.title()
+        self.last_name = last_name.title()
+
 
         # Optionals
-        self._rating = rating
-        self._is_admin = is_admin
-        self._is_subscriber = is_subscriber
-
-
-    @property
-    def uid(self):
-        return self._uid
-
-    @property
-    def first_name(self):
-        return self._first_name.title()
-
-    @property
-    def last_name(self):
-        return self._last_name.title()
+        self.rating = rating
+        self.is_admin = is_admin
+        self.is_subscriber = is_subscriber
 
     @property
     def full_name(self):
@@ -42,24 +30,8 @@ class User:
         return short_name
 
     @property
-    def rating(self):
-        return self._rating
-
-    @rating.setter
-    def rating(self, value):
-        self._rating = value
-
-    @property
-    def is_admin(self):
-        return self._is_admin
-
-    @property
-    def is_subscriber(self):
-        return self._is_subscriber
-
-    @property
     def is_guest(self):
-        return not self._is_subscriber
+        return not self.is_subscriber
 
     def serialize(self):
         return {

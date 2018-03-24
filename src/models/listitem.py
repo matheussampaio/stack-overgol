@@ -6,32 +6,13 @@ from models.user import User
 @total_ordering
 class ListItem:
     def __init__(self, user, is_goalkeeper=False, is_guest=False, timestamp=False, hide_guest_label=False, hide_subscriber_label=False):
-        self._user = user
-        self._is_goalkeeper = is_goalkeeper
-        self._is_guest = is_guest
-        self._hide_guest_label = hide_guest_label
-        self._hide_subscriber_label = hide_subscriber_label
+        self.user = user
+        self.is_goalkeeper = is_goalkeeper
+        self.is_guest = is_guest
+        self.timestamp = timestamp or int(time.time())
 
-        if timestamp:
-            self._timestamp = timestamp
-        else:
-            self._timestamp = int(time.time())
-
-    @property
-    def user(self):
-        return self._user
-
-    @property
-    def is_goalkeeper(self):
-        return self._is_goalkeeper
-
-    @property
-    def is_guest(self):
-        return self._is_guest
-
-    @property
-    def timestamp(self):
-        return self._timestamp
+        self.hide_guest_label = hide_guest_label
+        self.hide_subscriber_label = hide_subscriber_label
 
     def serialize(self):
         return {
@@ -51,10 +32,10 @@ class ListItem:
         return self.timestamp < other.timestamp
 
     def __str__(self):
-        if self.user.is_subscriber and not self._hide_subscriber_label:
+        if self.user.is_subscriber and not self.hide_subscriber_label:
             return "{!s:<{short_name_length}} (M)".format(self.user.short_name, short_name_length=User.SHORT_NAME_LENGTH)
 
-        if not self.user.is_subscriber and not self._hide_guest_label:
+        if not self.user.is_subscriber and not self.hide_guest_label:
             return "{!s:<{short_name_length}} (C)".format(self.user.short_name, short_name_length=User.SHORT_NAME_LENGTH)
 
         return "{!s:<{short_name_length}}".format(self.user.short_name, short_name_length=User.SHORT_NAME_LENGTH)
