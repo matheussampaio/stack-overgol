@@ -162,7 +162,10 @@ class Group():
 
             if listitem:
                 listitem.user = user
-                database.child("list").child(user.uid).set(listitem.serialize())
+
+                self.list.sort()
+
+                database.child("list").set({ item.user.uid: item.serialize() for item in self.list })
 
         def update_user(user, payload):
             if "rating" in payload:
