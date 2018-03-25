@@ -11,7 +11,7 @@ venv/
 .DS_Store
 
 # Firebase configurations
-firebase*.json
+firebase.json
 
 # Others
 *.pyc

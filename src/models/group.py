@@ -1,4 +1,5 @@
 import logging
+import time
 
 from database.firebase import database
 from models.listitem import ListItem
@@ -80,7 +81,11 @@ class Group():
         return None
 
     def create_user(self, data):
-        user = User(uid=data["id"], rating=configs.get("RACHA.DEFAULT_RATING"), **data)
+        user = User(
+            uid=data["id"],
+            rating=configs.get("RACHA.DEFAULT_RATING"),
+            created_at=time.time(),
+            **data)
 
         self.all_users.append(user)
         self.should_sync = True

@@ -1,8 +1,8 @@
-import time
 import logging
+import time
 
-from utils import configs
 from models.group import group
+from utils import configs
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,9 @@ class Command(object):
             data = update.message.from_user.to_dict()
 
             user = group.get_user_or_create(data)
+
+            user.last_seen = time.time()
+            group.should_sync = True
 
             # Sempre permitir mensagens vindas do Master Admin
             if user.uid in configs.get("MASTER_ADMIN_TELEGRAM_ID"):
