@@ -1,0 +1,71 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": "auth != null",
+    "check_in_open": {
+      ".validate": "newData.isBoolean()"
+    },
+    "list": {
+      "$user_id": {
+        ".validate": "newData.hasChildren(['user', 'first_name'])"
+      }
+    },
+    "users": {
+      "$user_id": {
+        ".validate": "newData.hasChildren(['uid', 'first_name'])",
+        "uid": {
+          ".validate": "newData.isNumber() && '' + newData.val() == $user_id"
+        },
+        "first_name": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "last_name": {
+          ".validate": "newData.isString()"
+        },
+        "rating": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 5"
+        },
+        "is_subscriber": {
+          ".validate": "newData.isBoolean()"
+        },
+        "is_admin": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+    "updates": {
+      "$update_id": {
+        ".validate": "root.child('web-users/' + auth.uid + '/is_admin').val() == true && newData.hasChildren(['resource', 'operation', 'payload'])",
+        "resource": {
+          ".validate": "newData.val() == 'users'"
+        },
+        "operation": {
+          ".validate": "newData.val() == 'update'"
+        },
+        "payload": {
+          ".validate": "newData.hasChildren(['id'])",
+          "id": {
+            ".validate": "newData.isNumber() && root.child('users/' + newData.val()).exists()"
+          }
+        }
+      }
+    },
+    "web-users": {
+      "$web_user_uid": {
+        ".validate": "auth.uid == $web_user_uid && newData.hasChildren(['email', 'display_name', 'uid'])",
+        "uid": {
+          ".validate": "newData.val() == $web_user_uid"
+        },
+        "display_name": {
+          ".validate": "newData.isString()"
+        },
+        "email": {
+          ".validate": "newData.isString()"
+        },
+        "is_admin": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    }
+  }
+}
