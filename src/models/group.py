@@ -227,7 +227,7 @@ class Group():
 
         return players
 
-    def __str__(self):
+    def format(self, show_aditional_info=False):
         output = [
             "```",
             "Lista de Presença",
@@ -243,7 +243,10 @@ class Group():
                 if i == configs.get("RACHA.MAX_TEAMS"):
                     output.append("\nLista de Espera (Goleiro):")
 
-                output.append("{:>2}. {}".format(i + 1, item_goalkeeper))
+                if show_aditional_info:
+                    output.append("{:>2}. {} ({})".format(i + 1, item_goalkeeper, item_goalkeeper.user.uid))
+                else:
+                    output.append("{:>2}. {}".format(i + 1, item_goalkeeper))
 
             output.append("")
 
@@ -258,7 +261,10 @@ class Group():
                 if max_players and i == max_players:
                     output.append("\nLista de Espera (Jogador):")
 
-                output.append("{:>2}. {}".format(i + 1, item_player))
+                if show_aditional_info:
+                    output.append("{:>2}. {} ({})".format(i + 1, item_player, item_player.user.uid))
+                else:
+                    output.append("{:>2}. {}".format(i + 1, item_player))
 
         output.append("```")
 

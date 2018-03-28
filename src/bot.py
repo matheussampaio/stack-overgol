@@ -123,9 +123,11 @@ class Bot:
         return update.message.reply_text("{} não está na lista de presença.".format(user))
 
     @Command(onde=False, quando=False, quem=False)
-    def listar(self, bot, update, user):
+    def listar(self, bot, update, user, **kwargs):
+        show_aditional_info = len(kwargs["args"]) and kwargs["args"][0] == "mais"
+        group_list = group.format(show_aditional_info)
 
-        return update.message.reply_text(text=str(group), parse_mode=ParseMode.MARKDOWN)
+        return update.message.reply_text(text=group_list, parse_mode=ParseMode.MARKDOWN)
 
     @Command(onde=False, quando="FECHADO", quem="ADMIN")
     def abrir(self, bot, update, user):
