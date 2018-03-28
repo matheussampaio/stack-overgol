@@ -84,7 +84,7 @@ class Bot:
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def convidado(self, bot, update, user, **kwargs):
         if len(kwargs["args"]) != 3:
-            return update.message.reply_text("`/convidado <nome> <sobrenome> <rating>`")
+            return update.message.reply_text("`/convidado <nome> <sobrenome> <rating>`", parse_mode=ParseMode.MARKDOWN)
 
         guest_id = user.uid + int(time.time()) - 3 * 60 * 60
         first_name = kwargs["args"][0]
@@ -103,7 +103,7 @@ class Bot:
     @Command(onde="GRUPO", quando="ABERTO", quem=False)
     def convidado_agarrar(self, bot, update, user, **kwargs):
         if len(kwargs["args"]) != 2:
-            return update.message.reply_text("`/convidado_agarrar <nome> <sobrenome>`")
+            return update.message.reply_text("`/convidado_agarrar <nome> <sobrenome>`", parse_mode=ParseMode.MARKDOWN)
 
         guest_id = user.uid + int(time.time()) - 3 * 60 * 60
         first_name = kwargs["args"][0]
@@ -185,37 +185,51 @@ class Bot:
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def naovai(self, bot, update, user, **kwargs):
-        term = ""
+        if not kwargs["args"]:
+            return update.message.reply_text("`/naovai <nome> <sobrenome>` or `/naovai <uid>`", parse_mode=ParseMode.MARKDOWN)
 
-        if kwargs["args"]:
-            term = " ".join(kwargs["args"])
+        term = " ".join(kwargs["args"])
 
-        players = group.find_on_list(term)
+        if term.isdigit():
+            listitems = group.find_on_list_with_uid(int(term))
+        else:
+            listitems = group.find_on_list(term)
 
-        if not players:
+        if not listitems and term.isdigit():
+            return update.message.reply_text("Não consigo achar nenhum jogador com UID `{}`".format(term), parse_mode=ParseMode.MARKDOWN)
+
+        if not listitems:
             return update.message.reply_text("Não consigo achar nenhum jogador com '{}'".format(term))
 
-        if len(players) > 1:
+        if len(listitems) > 1:
             output = "Vários jogadores encontrados, tente filtrar um pouco mais:\n"
 
-            for i, player in enumerate(sorted(players, key=lambda p: p.full_name)):
-                output += " - {}\n".format(player)
+            for i, listitem in enumerate(sorted(listitems, key=lambda listitem: listitem.user.full_name)):
+                output += " - {} (`{}`)\n".format(listitem, listitem.user.uid)
 
-            return update.message.reply_text(output)
+            return update.message.reply_text(output, parse_mode=ParseMode.MARKDOWN)
 
-        if group.remove(players[0]):
-            return update.message.reply_text("{} removido da lista de presença.".format(players[0]))
+        if group.remove(listitems[0].user):
+            return update.message.reply_text("{} removido da lista de presença.".format(listitems[0]))
 
-        return update.message.reply_text("Error: {}.".format(players[0]))
+        return update.message.reply_text("Error: {}.".format(listitems[0]))
 
     @Command(onde="GRUPO", quando=False, quem="ADMIN")
     def vai(self, bot, update, user, **kwargs):
-        term = ""
+        if not kwargs["args"]:
+            return update.message.reply_text("`/vai <nome> <sobrenome>` or `/vai <uid>`", parse_mode=ParseMode.MARKDOWN)
 
-        if kwargs["args"]:
-            term = " ".join(kwargs["args"])
+        term = " ".join(kwargs["args"])
 
-        players = group.find_on_all_players(term, filter_players_on_list=True)
+        if term.isdigit():
+            players = group.find_on_all_players_with_uid(int(term), filter_players_on_list=True)
+        else:
+            players = group.find_on_all_players(term, filter_players_on_list=True)
+
+        logger.info(players)
+
+        if not players and term.isdigit():
+            return update.message.reply_text("Não consigo achar nenhum jogador com UID `{}`".format(term), parse_mode=ParseMode.MARKDOWN)
 
         if not players:
             return update.message.reply_text("Não consigo achar nenhum jogador com '{}'".format(term))
@@ -223,10 +237,10 @@ class Bot:
         if len(players) > 1:
             output = "Vários jogadores encontrados, tente filtrar um pouco mais:\n"
 
-            for i, player in enumerate(sorted(players, key=lambda p: p.full_name)):
-                output += " - {}\n".format(player)
+            for i, player in enumerate(sorted(players, key=lambda player: player.full_name)):
+                output += " - {} (`{}`)\n".format(player, player.uid)
 
-            return update.message.reply_text(output)
+            return update.message.reply_text(output, parse_mode=ParseMode.MARKDOWN)
 
         if group.add(players[0], is_guest=players[0].is_guest):
             return update.message.reply_text("{} adicionado na lista de presença.".format(players[0]))

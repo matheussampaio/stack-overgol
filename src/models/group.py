@@ -206,10 +206,21 @@ class Group():
         database.child("updates").stream(updates_handler)
 
     def find_on_list(self, term):
-        return [item.user for item in self.list if term.lower() in str(item.user).lower()]
+        return [item for item in self.list if term.lower() in str(item.user).lower()]
+
+    def find_on_list_with_uid(self, uid):
+        return [item for item in self.list if item.user.uid == uid]
 
     def find_on_all_players(self, term, filter_players_on_list=False):
         players = [player for player in self.all_users if term.lower() in player.full_name.lower()]
+
+        if filter_players_on_list:
+            players = [player for player in players if not self.__contains__(player)]
+
+        return players
+
+    def find_on_all_players_with_uid(self, uid, filter_players_on_list=False):
+        players = [player for player in self.all_users if player.uid == uid]
 
         if filter_players_on_list:
             players = [player for player in players if not self.__contains__(player)]
