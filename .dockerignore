@@ -1,0 +1,6 @@
+.vscode/
+venv/
+
+*.log
+configs.yml
+.env

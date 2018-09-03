@@ -18,3 +18,5 @@ firebase.json
 
 # Settings
 configs.yml
+
+.env
