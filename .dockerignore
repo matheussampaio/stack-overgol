@@ -1,6 +1,13 @@
+.git/
 .vscode/
 venv/
 
 *.log
 configs.yml
 .env
+install
+stack-overgol-bot.service
+firebase.json
+firebase_rules.json
+.travis.yml
+.editorconfig

@@ -1,10 +1,7 @@
-import logging
 import time
 
 from models.group import group
-from utils import configs
-
-logger = logging.getLogger(__name__)
+from utils.config import Config
 
 class Command(object):
     def __init__(self, onde="GRUPO", quando="ABERTO", quem=False):
@@ -22,11 +19,11 @@ class Command(object):
             group.should_sync = True
 
             # Sempre permitir mensagens vindas do Master Admin
-            if user.uid in configs.get("MASTER_ADMIN_TELEGRAM_ID"):
+            if user.uid in Config.master_admin_telegram_id():
                 return f(_self, bot, update, user, *args, **kwargs)
 
             # ONDE: "GRUPO", False
-            if self.onde == "GRUPO" and update.message.chat.id != int(configs.get("TELEGRAM.GROUP_ID")):
+            if self.onde == "GRUPO" and update.message.chat.id != int(Config.telegram_group_id()):
                 return update.message.reply_text("Esse comando só é válido dentro do grupo.")
 
             # QUEM: "ADMIN", "MENSALISTA", False

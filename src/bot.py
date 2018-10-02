@@ -1,23 +1,18 @@
 import time
 import logging
 
-from telegram.ext import Job
-from telegram import ParseMode
-
+from datetime import datetime, timedelta
 from models.user import User
 from models.group import group
-
-from utils import configs
-from database.firebase import database
+from utils.config import Config
 from decorators.command import Command
+from telegram import ParseMode
 
 logger = logging.getLogger(__name__)
 
-from datetime import datetime, timedelta
-
 def get_next_datetime(date):
-    day, time = date.split(" ")
-    hour, minute = map(int, time.split(":"))
+    day, hour = date.split(" ")
+    hour, minute = map(int, hour.split(":"))
 
     temp = datetime.now()
 
@@ -44,13 +39,13 @@ class Bot:
     def schedule_open_check_in(self):
         def open_check_in_callback(bot, job):
             group.reset()
-            bot.send_message(chat_id=configs.get("TELEGRAM.GROUP_ID"), text="Registros resetados.")
+            bot.send_message(chat_id=Config.telegram_group_id(), text="Registros resetados.")
 
             if not group.is_check_in_open():
                 group.open_check_in()
-                bot.send_message(chat_id=configs.get("TELEGRAM.GROUP_ID"), text="Registros abertos.")
+                bot.send_message(chat_id=Config.telegram_group_id(), text="Registros abertos.")
 
-        first_date = get_next_datetime(configs.get("RACHA.OPEN_CHECK_IN_DATE"))
+        first_date = get_next_datetime(Config.racha_open_check_in_date())
 
         return self.job_queue.run_repeating(open_check_in_callback, timedelta(days=7), first=first_date)
 
@@ -58,9 +53,9 @@ class Bot:
         def close_check_in_callback(bot, job):
             if group.is_check_in_open():
                 group.close_check_in()
-                bot.send_message(chat_id=configs.get("TELEGRAM.GROUP_ID"), text="Registros fechados.")
+                bot.send_message(chat_id=Config.telegram_group_id(), text="Registros fechados.")
 
-        first_date = get_next_datetime(configs.get("RACHA.CLOSE_CHECK_IN_DATE"))
+        first_date = get_next_datetime(Config.racha_close_check_in_date())
 
         return self.job_queue.run_repeating(close_check_in_callback, timedelta(days=7), first=first_date)
 
@@ -155,8 +150,8 @@ class Bot:
                 parse_mode=ParseMode.MARKDOWN
             )
 
-        number_teams = configs.get("RACHA.MAX_TEAMS")
-        team_size = configs.get("RACHA.MAX_NUMBER_PLAYERS_TEAM")
+        number_teams = Config.racha_max_teams()
+        team_size = Config.racha_max_number_players_team()
 
         if len(kwargs["args"]) == 2:
             number_teams = int(kwargs["args"][0])
@@ -165,10 +160,10 @@ class Bot:
         teams_str = group.calculate_teams(
             number_teams,
             team_size,
-            team_colors=configs.get("RACHA.TEAMS_COLORS"),
-            rating_range_variation=configs.get("RACHA.RATING_RANGE_VARIATION"),
-            complete_team_with_fake_players=configs.get("RACHA.COMPLETE_TEAMS_WITH_FAKE_PLAYERS"),
-            with_substitutes=configs.get("RACHA.HAS_SUBSTITUTES_LIST")
+            team_colors=Config.racha_teams_colors(),
+            rating_range_variation=[Config.racha_rating_range_variation_min(), Config.racha_rating_range_variation_max()],
+            complete_team_with_fake_players=Config.racha_complete_teams_with_fake_players(),
+            with_substitutes=Config.racha_has_substitutes_list()
         )
 
         return update.message.reply_text(text=teams_str, parse_mode=ParseMode.MARKDOWN)

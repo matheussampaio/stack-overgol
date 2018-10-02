@@ -2,7 +2,7 @@ import copy
 import random
 import logging
 
-from utils import configs
+from utils.config import Config
 from models.user import User
 from database.firebase import database
 

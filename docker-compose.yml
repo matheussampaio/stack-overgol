@@ -4,6 +4,11 @@ services:
   app:
     build:
       context: .
+    env_file: .env
+    volumes:
+      - ./src:/opt/app/src:delegated
+      - ./requirements.txt:/opt/app/requirements.txt
+      - ./firebase.json:/opt/app/firebase.json
 
 volumes:
     notused:

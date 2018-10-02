@@ -5,15 +5,15 @@ import os
 # import sys
 import logging
 
-from utils import configs
+from utils.config import Config
 
-os.environ["TZ"] = configs.get("TIMEZONE")
+os.environ["TZ"] = Config.timezone()
 
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 # Enable logging
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    level=logging.DEBUG if configs.get("DEBUG") else logging.INFO)
+                    level=logging.DEBUG if Config.debug() else logging.INFO)
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def error(bot, update, err):
 
 
 def main():
-    updater = Updater(configs.get("TELEGRAM.TOKEN"))
+    updater = Updater(Config.telegram_token())
 
     STACK_OVERGOL_CORE = Bot(updater.job_queue)
 

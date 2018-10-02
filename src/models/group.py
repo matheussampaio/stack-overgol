@@ -4,7 +4,7 @@ import time
 from database.firebase import database
 from models.listitem import ListItem
 from models.user import User
-from utils import configs
+from utils.config import Config
 from utils.teams import Teams
 
 logger = logging.getLogger(__name__)
@@ -39,8 +39,8 @@ class Group():
                 player,
                 is_goalkeeper,
                 is_guest,
-                hide_guest_label=configs.get("RACHA.HIDE_GUEST_LABEL"),
-                hide_subscriber_label=configs.get("RACHA.HIDE_SUBSCRIBER_LABEL")
+                hide_guest_label=Config.racha_hide_guest_label(),
+                hide_subscriber_label=Config.racha_hide_subscriber_label()
             ))
             self.list.sort()
             self.should_sync = True
@@ -83,7 +83,7 @@ class Group():
     def create_user(self, data):
         user = User(
             uid=data["id"],
-            rating=configs.get("RACHA.DEFAULT_RATING"),
+            rating=Config.racha_default_rating(),
             created_at=time.time(),
             **data)
 
@@ -128,8 +128,8 @@ class Group():
 
                 listitem = ListItem(
                     user,
-                    hide_guest_label=configs.get("RACHA.HIDE_GUEST_LABEL"),
-                    hide_subscriber_label=configs.get("RACHA.HIDE_SUBSCRIBER_LABEL"),
+                    hide_guest_label=Config.racha_hide_guest_label(),
+                    hide_subscriber_label=Config.racha_hide_subscriber_label(),
                     **values
                 )
 
@@ -159,7 +159,7 @@ class Group():
                 self.save()
 
         if self.job_queue:
-            self.job_queue.run_repeating(on_save_time, configs.get("SYNC_INTERVAL"))
+            self.job_queue.run_repeating(on_save_time, Config.sync_interval())
 
     def watch_updates(self):
         def update_listitem(user):
@@ -240,7 +240,7 @@ class Group():
             output.append("Goleiros:")
 
             for i, item_goalkeeper in enumerate(items_goalkeepers):
-                if i == configs.get("RACHA.MAX_TEAMS"):
+                if i == Config.racha_max_teams():
                     output.append("\nLista de Espera (Goleiro):")
 
                 if show_aditional_info:
@@ -252,7 +252,7 @@ class Group():
 
         items_players = [item for item in self.list if not item.is_goalkeeper]
 
-        max_players = configs.get("RACHA.MAX_TEAMS") * configs.get("RACHA.MAX_NUMBER_PLAYERS_TEAM")
+        max_players = Config.racha_max_teams() * Config.racha_max_number_players_team()
 
         if items_players:
             output.append("Jogadores:")

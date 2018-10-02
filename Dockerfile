@@ -1,7 +1,11 @@
 FROM python:3.7
 
-COPY . ./
+WORKDIR /opt/app
+
+COPY requirements.txt ./
 
 RUN pip install -r requirements.txt
 
-CMD [ "python3", "./src/main.py" ]
+COPY . ./
+
+CMD [ "python", "./src/main.py" ]

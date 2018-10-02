@@ -3,7 +3,7 @@ import pyrebase
 
 from operator import itemgetter
 
-from utils import configs
+from utils.config import Config
 from database.firebase import database
 
 STACK_OVERGOL_ID = '-1001071336991'
