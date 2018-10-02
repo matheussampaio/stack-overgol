@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import os
-# import sys
 import logging
+import sentry_sdk
 
 from utils.config import Config
+
+if Config.sentry():
+    sentry_sdk.init(Config.sentry())
 
 os.environ["TZ"] = Config.timezone()
 

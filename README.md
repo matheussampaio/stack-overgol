@@ -20,31 +20,22 @@ vai - <nome> <sobrenome> - [Admin] Coloca alguém da lista de presença.
 vai_agarrar - <nome> <sobrenome> - [Admin] Coloca alguém da lista de goleiros.
 
 ## Requirements:
-- python3
-- pip
-- virtualenv
-
-## How to install:
-```
-$ virtualenv -p python3 venv
-$ source venv/bin/activate
-$ pip install -r requirements.txt
-```
+- Docker
 
 ## How to configure:
-```
-$ cp example_configs.yml src/.configs.yml
-```
+Copy `.env.example` to `.env` and modify all the values.
 
 ## How to run:
 ```
-$ python3 src/main.py
+$ docker-compose up
 ```
 
 ## How to run the tests:
 ```
-$ nose2
+$ docker-compose run app nose2
 ```
 
-## License
-MIT
+## Enable Logging to Loggly
+```
+docker run --name logspout -d --volume=/var/run/docker.sock:/var/run/docker.sock -e SYSLOG_STRUCTURED_DATA="TOKEN@41058 tag=\"Logspout\"" gliderlabs/logspout syslog+tcp://logs-01.loggly.com:514
+```

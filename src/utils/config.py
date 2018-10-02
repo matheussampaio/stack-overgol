@@ -25,6 +25,11 @@ class Config:
         """Telegram group id"""
         return os.getenv("TELEGRAM_GROUP_ID")
 
+    @staticmethod
+    def sentry():
+        """Sentry URL"""
+        return os.getenv("SENTRY")
+
     # Pode ser conseguido conversando com BotFather (https://telegram.me/BotFather):
     # /newbot, /token
     @staticmethod
@@ -63,7 +68,7 @@ class Config:
     @staticmethod
     def master_admin_telegram_id():
         """O bot sempre vai permitir os comandos desse usuário"""
-        return os.getenv("MASTER_ADMIN_TELEGRAM_ID")
+        return os.getenv("MASTER_ADMIN_TELEGRAM_ID", "").split(",")
 
     @staticmethod
     def racha_complete_teams_with_fake_players():

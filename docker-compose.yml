@@ -10,5 +10,3 @@ services:
       - ./requirements.txt:/opt/app/requirements.txt
       - ./firebase.json:/opt/app/firebase.json
 
-volumes:
-    notused:
