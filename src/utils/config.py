@@ -42,6 +42,31 @@ class Config:
         return os.getenv("TELEGRAM_TOKEN")
 
     @staticmethod
+    def firebase_project_id():
+        """Firebase Project ID"""
+        return os.getenv("FIREBASE_PROJECT_ID")
+
+    @staticmethod
+    def firebase_private_key_id():
+        """Firebase Private Key ID"""
+        return os.getenv("FIREBASE_PRIVATE_KEY_ID")
+
+    @staticmethod
+    def firebase_private_key():
+        """Firebase Private Key"""
+        return eval(os.getenv("FIREBASE_PRIVATE_KEY"))
+
+    @staticmethod
+    def firebase_client_email():
+        """Firebase Client Email"""
+        return os.getenv("FIREBASE_CLIENT_EMAIL")
+
+    @staticmethod
+    def firebase_client_id():
+        """Firebase Client ID"""
+        return os.getenv("FIREBASE_CLIENT_ID")
+
+    @staticmethod
     def firebase_api_key():
         """Firebase information"""
         return os.getenv("FIREBASE_API_KEY")
@@ -60,10 +85,6 @@ class Config:
     def firebase_storage_bucket():
         """Firebase storage bucket url (i.e. "<firebase-project-name>.appspot.com")"""
         return os.getenv("FIREBASE_STORAGE_BUCKET")
-
-    @staticmethod
-    def firebase_service_account():
-        return os.getenv("FIREBASE_SERVICE_ACCOUNT")
 
     @staticmethod
     def master_admin_telegram_id():
