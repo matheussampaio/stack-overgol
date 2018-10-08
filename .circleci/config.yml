@@ -8,11 +8,14 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: Build and push Docker image
-          command: |
-            docker build -t matheussampaio/stack-overgol:latest .
-            echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
-            docker push matheussampaio/stack-overgol:latest
+          name: Log in to Docker Hub
+          command: echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+      - run:
+          name: Build Docker image
+          command: docker build -t matheussampaio/stack-overgol:latest .
+      - run:
+          name: Push Docker image to Docker Hub
+          command: docker push matheussampaio/stack-overgol:latest
 
 workflows:
   version: 2

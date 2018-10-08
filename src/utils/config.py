@@ -1,4 +1,5 @@
 import os
+import base64
 
 class Config:
     @staticmethod
@@ -54,7 +55,14 @@ class Config:
     @staticmethod
     def firebase_private_key():
         """Firebase Private Key"""
-        return eval(os.getenv("FIREBASE_PRIVATE_KEY"))
+        key = Config.firebase_private_key_base64()
+
+        return base64.b64decode(key)
+
+    @staticmethod
+    def firebase_private_key_base64():
+        """Firebase Private Key Base64"""
+        return os.getenv("FIREBASE_PRIVATE_KEY_BASE64")
 
     @staticmethod
     def firebase_client_email():
