@@ -1,0 +1,24 @@
+version: 2
+
+jobs:
+  publish_image_to_docker_hub:
+    docker:
+      - image: python:3.7
+    steps:
+      - checkout
+      - setup_remote_docker
+      - command: |
+          docker build -t matheussampaio/stack-overgol:latest .
+          echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+          docker push matheussampaio/stack-overgol:latest
+
+workflows:
+  version: 2
+  continuous_integration:
+    jobs:
+      - publish_image_to_docker_hub:
+          filters:
+            branches:
+              ignore:
+                - master
+                - develop
