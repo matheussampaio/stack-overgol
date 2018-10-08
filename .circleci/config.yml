@@ -19,6 +19,6 @@ workflows:
       - publish_image_to_docker_hub:
           filters:
             branches:
-              ignore:
+              only:
                 - master
                 - develop
