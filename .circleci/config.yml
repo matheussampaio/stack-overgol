@@ -3,7 +3,7 @@ version: 2
 jobs:
   publish_image_to_docker_hub:
     docker:
-      - image: python:3.7
+      - image: docker:17.03.0-ce
     steps:
       - checkout
       - setup_remote_docker
