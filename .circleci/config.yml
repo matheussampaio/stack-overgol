@@ -3,7 +3,7 @@ version: 2
 jobs:
   publish_image_to_docker_hub:
     docker:
-      - image: docker:17.03.0-ce
+      - image: docker:18
     steps:
       - checkout
       - setup_remote_docker
