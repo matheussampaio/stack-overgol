@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/matheussampaio/stack-overgol.svg?branch=develop)](https://travis-ci.org/matheussampaio/stack-overgol)
+[![CircleCI](https://circleci.com/gh/matheussampaio/stack-overgol.svg?style=svg)](https://circleci.com/gh/matheussampaio/stack-overgol)
 
 Stack Overgol Bot
 =================
