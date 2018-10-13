@@ -1,4 +1,4 @@
-import time
+from datetime import datetime
 from functools import total_ordering
 
 from models.user import User
