@@ -1,5 +1,4 @@
-import time
-
+from datetime import datetime
 from models.group import group
 from utils.config import Config
 
@@ -15,7 +14,7 @@ class Command(object):
 
             user = group.get_user_or_create(data)
 
-            user.last_seen = time.time()
+            user.last_seen = datetime.utcnow().timestamp()
             group.should_sync = True
 
             # Sempre permitir mensagens vindas do Master Admin

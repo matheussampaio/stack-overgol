@@ -6,3 +6,4 @@ sure==1.4.11
 pylint==1.9.3
 python-dotenv==0.9.1
 sentry-sdk==0.3.7
+pytz==2018.5

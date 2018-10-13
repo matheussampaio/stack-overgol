@@ -84,7 +84,7 @@ class Group():
         user = User(
             uid=data["id"],
             rating=Config.racha_default_rating(),
-            created_at=time.time(),
+            created_at=datetime.utcnow().timestamp(),
             **data)
 
         self.all_users.append(user)

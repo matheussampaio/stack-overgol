@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import logging
 import sentry_sdk
 
@@ -10,13 +9,10 @@ from utils.config import Config
 if Config.sentry():
     sentry_sdk.init(Config.sentry())
 
-os.environ["TZ"] = Config.timezone()
-
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 # Enable logging
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    level=logging.DEBUG if Config.debug() else logging.INFO)
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=Config.log_level())
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +50,7 @@ def main():
     dp.add_handler(CommandHandler("naovou", STACK_OVERGOL_CORE.naovou))
     dp.add_handler(CommandHandler("vou", STACK_OVERGOL_CORE.vou))
     dp.add_handler(CommandHandler("vouagarrar", STACK_OVERGOL_CORE.vouagarrar))
+    dp.add_handler(CommandHandler("timestamp", STACK_OVERGOL_CORE.timestamp))
 
     # log all errors
     dp.add_error_handler(error)

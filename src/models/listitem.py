@@ -9,7 +9,7 @@ class ListItem:
         self.user = user
         self.is_goalkeeper = is_goalkeeper
         self.is_guest = is_guest
-        self.timestamp = timestamp or int(time.time())
+        self.timestamp = timestamp or int(datetime.utcnow().timestamp())
 
         self.hide_guest_label = hide_guest_label
         self.hide_subscriber_label = hide_subscriber_label

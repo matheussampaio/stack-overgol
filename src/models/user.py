@@ -15,8 +15,8 @@ class User:
         self.rating = rating
         self.is_admin = is_admin
         self.is_subscriber = is_subscriber
-        self.last_seen = last_seen or time.time()
-        self.created_at = created_at or time.time()
+        self.last_seen = last_seen or datetime.utcnow().timestamp()
+        self.created_at = created_at or datetime.utcnow().timestamp()
 
 
     @property

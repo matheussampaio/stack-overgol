@@ -8,13 +8,9 @@ class Config:
         return os.getenv("DEBUG", False)
 
     @staticmethod
-    def timezone():
-        """
-        Força a aplicação a usar o timezone definido abaixo (ignore o timezone do host)
-
-        Columna "TZ": https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-        """
-        return os.getenv("TIMEZONE", "America/Recife")
+    def log_level():
+        """Configura o nivel de logs"""
+        return os.getenv("LOG_LEVEL", 20)
 
     @staticmethod
     def sync_interval():
@@ -152,9 +148,9 @@ class Config:
     @staticmethod
     def racha_open_check_in_date():
         """Se OPEN_CHECK_IN_DATE for definido, o bot irá automaticamente abrir o check in do racha"""
-        return os.getenv("RACHA_OPEN_CHECK_IN_DATE", "monday 20:00")
+        return os.getenv("RACHA_OPEN_CHECK_IN_DATE", "monday 20:00 America/Recife")
 
     @staticmethod
     def racha_close_check_in_date():
         """Se CLOSE_CHECK_IN_DATE for definido, o bot irá automaticamente fechar o check in do racha"""
-        return os.getenv("RACHA_CLOSE_CHECK_IN_DATE", "tuesday 15:00")
+        return os.getenv("RACHA_CLOSE_CHECK_IN_DATE", "tuesday 15:00 America/Recife")

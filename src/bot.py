@@ -11,10 +11,10 @@ from telegram import ParseMode
 logger = logging.getLogger(__name__)
 
 def get_next_datetime(date):
-    day, hour = date.split(" ")
+    day, hour, timezone = date.split(" ")
     hour, minute = map(int, hour.split(":"))
 
-    temp = datetime.now()
+    temp = datetime.now(pytz.timezone(timezone))
 
     if temp.hour >= hour and temp.minute >= minute:
       temp += timedelta(days=1)
@@ -24,7 +24,7 @@ def get_next_datetime(date):
     while temp.strftime("%A").lower() != day.lower():
         temp += timedelta(days=1)
 
-    return temp
+    return temp.astimezone(pytz.timezone("UTC"))
 
 
 class Bot:
@@ -81,7 +81,7 @@ class Bot:
         if len(kwargs["args"]) != 3:
             return update.message.reply_text("`/convidado <nome> <sobrenome> <rating>`", parse_mode=ParseMode.MARKDOWN)
 
-        guest_id = user.uid + int(time.time()) - 3 * 60 * 60
+        guest_id = user.uid + int(datetime.utcnow().timestamp()) - 3 * 60 * 60
         first_name = kwargs["args"][0]
         last_name = kwargs["args"][1]
         rating = float(kwargs["args"][2])
@@ -100,7 +100,7 @@ class Bot:
         if len(kwargs["args"]) != 2:
             return update.message.reply_text("`/convidado_agarrar <nome> <sobrenome>`", parse_mode=ParseMode.MARKDOWN)
 
-        guest_id = user.uid + int(time.time()) - 3 * 60 * 60
+        guest_id = user.uid + int(datetime.utcnow().timestamp()) - 3 * 60 * 60
         first_name = kwargs["args"][0]
         last_name = kwargs["args"][1]
 
@@ -268,3 +268,7 @@ class Bot:
             return update.message.reply_text("{} adicionado na lista de goleiros.".format(players[0]))
 
         return update.message.reply_text("Error: {}".format(players[0]))
+
+    @Command(onde=False, quando=False, quem=False)
+    def timestamp(self, bot, update, user, **kwargs):
+        return update.message.reply_text("Datetime: {}".format(datetime.utcnow().isoformat()))
