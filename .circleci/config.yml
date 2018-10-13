@@ -1,6 +1,16 @@
 version: 2
 
 jobs:
+  test:
+    docker:
+      - image: docker:18
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Run tests
+          command: docker-compose run app nose2
+
   publish_image_to_docker_hub:
     docker:
       - image: docker:18
@@ -21,7 +31,11 @@ workflows:
   version: 2
   continuous_integration:
     jobs:
+      - test
+
       - publish_image_to_docker_hub:
+          requires:
+            - test
           filters:
             branches:
               only:
