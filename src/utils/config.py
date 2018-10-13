@@ -10,7 +10,7 @@ class Config:
     @staticmethod
     def log_level():
         """Configura o nivel de logs"""
-        return os.getenv("LOG_LEVEL", 20)
+        return int(os.getenv("LOG_LEVEL", 20))
 
     @staticmethod
     def sync_interval():
