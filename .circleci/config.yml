@@ -8,8 +8,11 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
+          name: Build Docker image
+          command: docker build -t matheussampaio/stack-overgol .
+      - run:
           name: Run tests
-          command: docker-compose run app nose2
+          command: docker run matheussampaio/stack-overgol nose2
 
   publish_image_to_docker_hub:
     docker:
