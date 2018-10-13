@@ -39,7 +39,7 @@ class TestListItem(unittest.TestCase):
 
     def test_firt_before_last(self):
         l_li_gk_guest = deepcopy(self.li_gk_guest)
-        l_li_gk_guest._timestamp = self.li_gk_guest.timestamp + 1
+        l_li_gk_guest.timestamp = self.li_gk_guest.timestamp + 1
 
         (self.li_gk_guest < l_li_gk_guest).should.be.true
 
