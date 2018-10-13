@@ -25,7 +25,7 @@ def get_next_datetime(date):
     while temp.strftime("%A").lower() != day.lower():
         temp += timedelta(days=1)
 
-    return temp.astimezone(pytz.timezone("UTC"))
+    return temp.astimezone(pytz.timezone("UTC")).replace(tzinfo=None)
 
 
 class Bot:
