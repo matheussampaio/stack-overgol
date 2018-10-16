@@ -113,7 +113,7 @@ class Config:
     @staticmethod
     def racha_teams_colors():
         """Cores usadas nos times"""
-        return os.getenv("RACHA_TEAMS_COLORS", "Azul,Vermelho,Verde,Branco")
+        return os.getenv("RACHA_TEAMS_COLORS", "Azul,Vermelho,Verde,Branco").split(",")
 
     @staticmethod
     def racha_default_rating():
