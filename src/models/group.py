@@ -184,26 +184,23 @@ class Group():
 
             database.child("users").child(user.uid).set(user.serialize())
 
-        def update(path, payload):
+        def update(key, payload):
             user = self.get_user(payload)
 
             if user:
                 update_user(user, payload)
                 update_listitem(user)
 
-            database.child("updates").child(path).remove()
+            database.child("updates").child(key).remove()
 
-        def updates_handler(message):
-            if message["data"] is None:
-                return
+        def updates_handler(bot, job):
+            updates = database.child("updates").get().val()
 
-            if message["path"] != "/":
-                return update(message["path"], message["data"]["payload"])
-
-            for key, changes in message["data"].items():
+            for key, changes in updates.items():
                 update(key, changes["payload"])
 
-        database.child("updates").stream(updates_handler)
+        if self.job_queue:
+            self.job_queue.run_repeating(updates_handler, Config.sync_interval())
 
     def find_on_list(self, term):
         return [item for item in self.list if term.lower() in str(item.user).lower()]

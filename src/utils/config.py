@@ -5,7 +5,7 @@ class Config:
     @staticmethod
     def debug():
         """Ativa modo DEBUG"""
-        return os.getenv("DEBUG", False)
+        return bool(os.getenv("DEBUG", False))
 
     @staticmethod
     def log_level():
@@ -15,7 +15,7 @@ class Config:
     @staticmethod
     def sync_interval():
         """Intervalo (segundos) entre sincronização com o db (firebase)"""
-        return os.getenv("SYNC_INTERVAL", 300)
+        return int(os.getenv("SYNC_INTERVAL", 60))
 
     @staticmethod
     def telegram_group_id():
@@ -98,17 +98,17 @@ class Config:
     @staticmethod
     def racha_complete_teams_with_fake_players():
         """Quando /times for executado, o bot vai colocar jogadores fakes até completar os times"""
-        return os.getenv("RACHA_COMPLETE_TEAMS_WITH_FAKE_PLAYERS", True)
+        return bool(os.getenv("RACHA_COMPLETE_TEAMS_WITH_FAKE_PLAYERS", True))
 
     @staticmethod
     def racha_max_teams():
         """Número máximo de times (minimo sempre é 2)"""
-        return os.getenv("RACHA_MAX_TEAMS", 4)
+        return int(os.getenv("RACHA_MAX_TEAMS", 4))
 
     @staticmethod
     def racha_max_number_players_team():
         """Número de jogadores por time"""
-        return os.getenv("RACHA_MAX_NUMBER_PLAYERS_TEAM", 6)
+        return int(os.getenv("RACHA_MAX_NUMBER_PLAYERS_TEAM", 6))
 
     @staticmethod
     def racha_teams_colors():
@@ -118,32 +118,32 @@ class Config:
     @staticmethod
     def racha_default_rating():
         """Se jogador não tiver rating, bot usa DEFAULT_RATING"""
-        return os.getenv("RACHA_DEFAULT_RATING", 3.00)
+        return float(os.getenv("RACHA_DEFAULT_RATING", 3.00))
 
     @staticmethod
     def racha_rating_range_variation_min():
         """Quando o bot calcula os times, para cada jogador um número entre o [RACHA_RATING_RANGE_VARIATION_MIN, RACHA_RATING_RANGE_VARIATION_MAX] é somado ao rating do jogador"""
-        return os.getenv("RACHA_RATING_RANGE_VARIATION_MIN", -0.25)
+        return float(os.getenv("RACHA_RATING_RANGE_VARIATION_MIN", -0.25))
 
     @staticmethod
     def racha_rating_range_variation_max():
         """Quando o bot calcula os times, para cada jogador um número entre o [RACHA_RATING_RANGE_VARIATION_MIN, RACHA_RATING_RANGE_VARIATION_MAX] é somado ao rating do jogador"""
-        return os.getenv("RACHA_RATING_RANGE_VARIATION_MAX", 0.25)
+        return float(os.getenv("RACHA_RATING_RANGE_VARIATION_MAX", 0.25))
 
     @staticmethod
     def racha_hide_subscriber_label():
         """Escode (M) depois do nome do jogador"""
-        return os.getenv("RACHA_HIDE_SUBSCRIBER_LABEL", False)
+        return bool(os.getenv("RACHA_HIDE_SUBSCRIBER_LABEL", False))
 
     @staticmethod
     def racha_hide_guest_label():
         """Esconde (C) depois do nome do jogador"""
-        return os.getenv("RACHA_HIDE_GUEST_LABEL", False)
+        return bool(os.getenv("RACHA_HIDE_GUEST_LABEL", False))
 
     @staticmethod
     def racha_has_substitutes_list():
         """Mostra lista de jogadores substitutos quando usar o comando /times"""
-        return os.getenv("RACHA_HAS_SUBSTITUTES_LIST", False)
+        return bool(os.getenv("RACHA_HAS_SUBSTITUTES_LIST", False))
 
     @staticmethod
     def racha_open_check_in_date():
