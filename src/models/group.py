@@ -196,6 +196,9 @@ class Group():
         def updates_handler(bot, job):
             updates = database.child("updates").get().val()
 
+            if not updates:
+                return
+
             for key, changes in updates.items():
                 update(key, changes["payload"])
 
