@@ -235,7 +235,7 @@ class Bot:
         if len(players) > 1:
             output = "Vários jogadores encontrados, tente filtrar um pouco mais:\n"
 
-            for i, player in enumerate(sorted(players, key=lambda player: player.full_name)):
+            for player in sorted(players, key=lambda player: player.full_name):
                 output += " - {} (`{}`)\n".format(player, player.uid)
 
             return update.message.reply_text(output, parse_mode=ParseMode.MARKDOWN)
@@ -273,3 +273,12 @@ class Bot:
     @Command(onde=False, quando=False, quem=False)
     def timestamp(self, bot, update, user, **kwargs):
         return update.message.reply_text("Datetime: {}".format(datetime.utcnow().isoformat()))
+
+    # Register new members in our database
+    def new_chat_members(self, bot, update):
+        for member in update.message.new_chat_members:
+            user = group.get_user_or_create(member.to_dict())
+
+            user.last_seen = datetime.utcnow().timestamp()
+
+        group.should_sync = True

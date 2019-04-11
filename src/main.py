@@ -9,7 +9,7 @@ from utils.config import Config
 if Config.sentry():
     sentry_sdk.init(Config.sentry())
 
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
 
 # Enable logging
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=Config.log_level())
@@ -51,6 +51,9 @@ def main():
     dp.add_handler(CommandHandler("vou", STACK_OVERGOL_CORE.vou))
     dp.add_handler(CommandHandler("vouagarrar", STACK_OVERGOL_CORE.vouagarrar))
     dp.add_handler(CommandHandler("timestamp", STACK_OVERGOL_CORE.timestamp))
+
+    # Message updates
+    dp.add_handler(MessageHandler(Filters.status_update.new_chat_members, STACK_OVERGOL_CORE.new_chat_members))
 
     # log all errors
     dp.add_error_handler(error)
